@@ -1,8 +1,6 @@
 <?php
 namespace MageTest\Manager;
 
-use MageTest\Manager\Attributes\Provider\PhpProvider;
-use MageTest\Manager\Attributes\Provider\YamlProvider;
 use MageTest\Manager\Attributes\Provider\ProviderInterface;
 use MageTest\Manager\Builders\BuilderInterface;
 use MageTest\Manager\Builders;

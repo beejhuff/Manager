@@ -2,6 +2,8 @@
 
 namespace MageTest\Manager\Attributes\Provider;
 
+use MageTest\Manager\Attributes\Provider\Loader\ParseFields;
+
 /**
  * Class AttributesProvider
  *
@@ -40,17 +42,22 @@ class AttributesProvider implements ProviderInterface
 
     /**
      * @param $file
+     * @throws Exception
      * @return array
      */
     public function readFile($file)
     {
         $this->setLoader($file);
         $model = $this->loader->load($file);
-        if ($this->getFileType($file) == 'yml') {
-            return $this->model = $this->parseFields($model);
-        }
 
-        $this->model = $this->loader->load($file);
+        if ($this->getFileType($file) !== 'php') {
+            if (!$this->loader instanceof ParseFields) {
+                throw new Exception('Your loader implementation needs to be able to parse its fields.');
+            }
+            $this->model = $this->loader->parseFields($model);
+        } else {
+            $this->model = $this->loader->load($file);
+        }
     }
 
     /**
@@ -83,6 +90,10 @@ class AttributesProvider implements ProviderInterface
         if (strstr($file, '.yml')) {
             return 'yml';
         }
+
+        if (strstr($file, '.xml')) {
+            return 'xml';
+        }
         return 'php';
     }
 
@@ -103,40 +114,6 @@ class AttributesProvider implements ProviderInterface
         $fileType = $this->getFileType($file);
         $loader = __NAMESPACE__ . '\\Loader\\' . ucfirst($fileType) . 'Loader';
         return new $loader;
-    }
-
-    /**
-     * @param $model
-     * @return array
-     */
-    private function parseFields($model)
-    {
-        return array(
-            $this->parseModel(key($model)) => array(
-                'depends' => $this->parseDependencies(key($model)),
-                'attributes' => reset($model)
-            )
-        );
-    }
-
-    /**
-     * @param $key
-     * @return mixed
-     */
-    private function parseModel($key)
-    {
-        preg_match("/[^ (]+/", $key, $matches);
-        return $matches[0];
-    }
-
-    /**
-     * @param $key
-     * @return mixed
-     */
-    private function parseDependencies($key)
-    {
-        preg_match("/ \((.*)\)/", $key, $matches);
-        return $matches[1];
     }
 
 }
