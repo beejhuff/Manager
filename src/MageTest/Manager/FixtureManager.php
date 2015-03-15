@@ -1,6 +1,9 @@
 <?php
 namespace MageTest\Manager;
 
+use InvalidArgumentException;
+use Mage;
+use Mage_Core_Model_App;
 use MageTest\Manager\Attributes\Provider\ProviderInterface;
 use MageTest\Manager\Builders\BuilderInterface;
 use MageTest\Manager\Builders;
@@ -13,6 +16,10 @@ use MageTest\Manager\Builders;
 class FixtureManager
 {
     /**
+     *  Where the user has to store its project specific fixtures
+     */
+    const CUSTOM_FIXTURES_DIR = '/tests/fixtures';
+    /**
      * @var array
      */
     private $fixtures = array();
@@ -22,7 +29,9 @@ class FixtureManager
      */
     private $builders = array();
 
-    /* @var \MageTest\Manager\Attributes\Provider\ProviderInterface */
+    /**
+     * @var ProviderInterface
+     */
     private $attributesProvider;
 
     /**
@@ -37,10 +46,11 @@ class FixtureManager
      * @param       $fixtureType
      * @param null  $userFixtureFile
      * @param array $overrides
+     * @param       $multiplier
      * @internal param $fixtureFile
      * @return mixed
      */
-    public function loadFixture($fixtureType, $userFixtureFile = null, array $overrides = null)
+    public function loadFixture($fixtureType, $userFixtureFile = null, array $overrides = null, $multiplier = null)
     {
         $attributesProvider = clone $this->attributesProvider;
         if (!is_null($userFixtureFile)) {
@@ -66,37 +76,61 @@ class FixtureManager
                 $builder->$withDependency($this->loadFixture($dependency));
             }
         }
-        return $this->create($attributesProvider->getModelType(), $builder);
+        return $this->create($attributesProvider->getModelType(), $builder, $multiplier);
     }
 
     /**
      * @param                  $name
      * @param BuilderInterface $builder
+     * @param                  $multiplier
      * @return mixed
-     * @throws \InvalidArgumentException
      */
-    public function create($name, BuilderInterface $builder)
+    public function create($name, BuilderInterface $builder, $multiplier)
     {
+        if ($multiplier > 1) {
+            $models = array();
+            while ($multiplier) {
+                $model = $builder->build();
+                Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+                $models[] = $model->save();
+                $multiplier--;
+            }
+            Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
+            Factory::resetMultiplier();
+            return $this->fixtures[$name] = $models;
+        }
         $model = $builder->build();
-
-        \Mage::app()->setCurrentStore(\Mage_Core_Model_App::ADMIN_STORE_ID);
+        Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
         $model->save();
-        \Mage::app()->setCurrentStore(\Mage_Core_Model_App::DISTRO_STORE_ID);
-
+        Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
         return $this->fixtures[$name] = $model;
     }
 
     /**
+     *  Returns a single model previously loaded
+     *
      * @param $name
+     * @param $number If it has several of same type, get model with $number
+     * @throws InvalidArgumentException
      * @return mixed
-     * @throws \InvalidArgumentException
      */
-    public function getFixture($name)
+    public function getFixture($name, $number = null)
     {
         if (!$this->hasFixture($name)) {
-            throw new \InvalidArgumentException("Could not find a fixture: $name");
+            throw new InvalidArgumentException("Could not find a fixture: $name");
         }
-
+        // A number was given, and indeed the fixtures key is an array,
+        // then go ahead and return the wanted number
+        if ($number && is_array($this->fixtures[$name])) {
+            return $this->fixtures[$name][$number];
+        }
+        // If no number is specified as argument, then return the first one off
+        // fixtures the array
+        if (is_array($this->fixtures[$name])) {
+            return $this->fixtures[$name][0];
+        }
+        // Lastly, if its not an array and no number was given, just return
+        // the fixture that was queried for
         return $this->fixtures[$name];
     }
 
@@ -114,9 +148,9 @@ class FixtureManager
     public function clear()
     {
         foreach ($this->fixtures as $model) {
-            \Mage::app()->setCurrentStore(\Mage_Core_Model_App::ADMIN_STORE_ID);
+            Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
             $model->delete();
-            \Mage::app()->setCurrentStore(\Mage_Core_Model_App::DISTRO_STORE_ID);
+            Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
         }
         $this->fixtures = array();
     }
@@ -158,12 +192,12 @@ class FixtureManager
 
     /**
      * @param $fixtureFile
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     private function fixtureFileExists($fixtureFile)
     {
         if (!file_exists($fixtureFile)) {
-            throw new \InvalidArgumentException("The fixture file: $fixtureFile does not exist. Please check path.");
+            throw new InvalidArgumentException("The fixture file: $fixtureFile does not exist. Please check path.");
         }
     }
 
@@ -177,20 +211,20 @@ class FixtureManager
         $filePath = __DIR__ . '/Fixtures/';
         switch ($fixtureType) {
             case 'admin/user':
-                return $filePath . 'admin' . $fileType;
+                return $filePath . 'Admin' . $fileType;
             case 'customer/address':
-                return $filePath . 'address' . $fileType;
+                return $filePath . 'Address' . $fileType;
             case 'customer/customer':
-                return $filePath . 'customer' . $fileType;
+                return $filePath . 'Customer' . $fileType;
             case 'catalog/product':
-                return $filePath . 'product' . $fileType;
+                return $filePath . 'Product' . $fileType;
             case 'sales/quote':
-                return $filePath . 'order' . $fileType;
+                return $filePath . 'Order' . $fileType;
         }
     }
 
     /**
-     *  Get the default fixture path
+     *  Get the default fixture path.
      *  TODO: don't use getcwd()?
      *
      * @param      $fixtureType
@@ -201,8 +235,10 @@ class FixtureManager
     {
         $parts = explode("/", $fixtureType);
         return implode('', array(
-                getcwd() . '/tests/fixtures/',
-                strtolower($parts[1]),
+                getcwd(),
+                static::CUSTOM_FIXTURES_DIR,
+                DIRECTORY_SEPARATOR,
+                $parts[1] == 'quote' ? 'order' : $parts[1],
                 $type ? : '.yml'
             )
         );
@@ -222,12 +258,9 @@ class FixtureManager
         if (file_exists($fixturePath = $this->getCustomFixtureTemplate($fixtureType, '.yml'))) {
             return $fixturePath;
         }
-        // default php
-        if (file_exists($fixturePath = $this->getDefaultFixtureTemplate($fixtureType, '.php'))) {
-            return $fixturePath;
-        }
+
         // default yaml
-        return $this->getDefaultFixtureTemplate($fixtureType);
+        return $this->getDefaultFixtureTemplate($fixtureType, '.yml');
     }
 
     /**

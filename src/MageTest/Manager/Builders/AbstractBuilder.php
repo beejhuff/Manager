@@ -13,6 +13,7 @@ abstract class AbstractBuilder
      * @var array
      */
     public $attributes;
+
     /**
      * @var false|\Mage_Core_Model_Abstract
      */
@@ -46,4 +47,5 @@ abstract class AbstractBuilder
         }
         return $ids;
     }
-} 
+
+}

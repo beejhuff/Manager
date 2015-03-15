@@ -17,8 +17,11 @@ class FactoryTest extends WebTestCase
 
     public function testCreateSimpleProduct()
     {
-        $product = Factory::make('catalog/product', ['name' => 'foo']);
-        $this->assertEquals('foo', $product->getName());
+        $products = Factory::times(3)->make('catalog/product', ['name' => 'foo']);
+        $this->assertEquals(3, count($products));
+        foreach ($products as $product) {
+            $this->assertEquals('foo', $product->getName());
+        }
     }
 
     public function testCreateAddress()
@@ -28,13 +31,14 @@ class FactoryTest extends WebTestCase
         $this->assertEquals('Session Digital', $address->getCompany());
         $this->assertEquals('Stockholm', $address->getCity());
     }
-//
-//    public function testCreateOrder()
-//    {
-//        $order = Factory::make('sales/quote', ['customer_email' => 'test@test.de']);
-//
-//        $this->assertEquals('test@test.de', $order->getCustomerEmail());
-//    }
+
+    public function testCreateOrder()
+    {
+        $orders = Factory::times(2)->make('sales/quote', ['customer_email' => 'test@test.de']);
+
+        $this->assertCount(2, $orders);
+        $this->assertInstanceOf('Mage_Sales_Model_Order', $orders[0]);
+    }
 
 }
  

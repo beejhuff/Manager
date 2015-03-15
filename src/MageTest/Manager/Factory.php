@@ -14,6 +14,11 @@ use MageTest\Manager\Attributes\Provider\YamlProvider;
 class Factory
 {
     /**
+     * @var
+     */
+    private static $multiplier;
+
+    /**
      * @var FixtureManager
      */
     protected $fixtureManager;
@@ -22,12 +27,15 @@ class Factory
      * @var
      */
     protected static $model;
+
     /**
      * @param null $fixtureManager
      * @param null $provider
+     * @param null $multiplier
      */
-    public function __construct($fixtureManager = null, $provider = null)
+    public function __construct($fixtureManager = null, $provider = null, $multiplier = null)
     {
+        static::$multiplier = $multiplier;
         $this->fixtureManager = $fixtureManager ? : new FixtureManager(new AttributesProvider);
     }
 
@@ -39,7 +47,7 @@ class Factory
      */
     public static function make($model, array $overrides = array(), $fixtureFile = null)
     {
-        return (new static)->fixtureManager->loadFixture($model, $fixtureFile, $overrides);
+        return (new static(null, null, static::$multiplier))->fixtureManager->loadFixture($model, $fixtureFile, $overrides, static::$multiplier);
     }
 
     /**
@@ -56,6 +64,23 @@ class Factory
     public static function clear()
     {
         static::$fixtureManager->clear();
+    }
+
+    /**
+     * @param $multiplier
+     * @return static
+     */
+    public static function times($multiplier)
+    {
+        return new static(null, null, $multiplier);
+    }
+
+    /**
+     *  Reset counter
+     */
+    public static function resetMultiplier()
+    {
+        static::$multiplier = 0;
     }
 
 }
