@@ -5,7 +5,7 @@ namespace spec\MageTest\Manager\Attributes\Provider;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
-class YamlProviderSpec extends ObjectBehavior
+class AttributesProviderSpec extends ObjectBehavior
 {
     function let()
     {
@@ -19,19 +19,19 @@ class YamlProviderSpec extends ObjectBehavior
     function it_should_read_yaml_file()
     {
         $this->readAttributes()->shouldBeLike(array(
-            'company' => 'Session Digital',
-            'street' => 'Brown Street',
-            'street1' => 'Brown Street',
-            'city' => 'Manchester',
-            'postcode' =>  'M2 2JG',
-            'region' => 'Lancashire',
-            'country' => 'United Kingdom',
-            'country_id' => 'GB',
-            'telephone' => '1234567890',
-            'is_default_billing' => '1',
-            'is_default_shipping' => '1',
-            'save_in_address_book' => '1'
-        ));
+                'company' => 'Session Digital',
+                'street' => 'Brown Street',
+                'street1' => 'Brown Street',
+                'city' => 'Manchester',
+                'postcode' =>  'M2 2JG',
+                'region' => 'Lancashire',
+                'country' => 'United Kingdom',
+                'country_id' => 'GB',
+                'telephone' => 1234567890,
+                'is_default_billing' => 1,
+                'is_default_shipping' => 1,
+                'save_in_address_book' => 1
+            ));
     }
 
     function it_should_get_the_magento_model_from_the_yaml_file()
@@ -48,9 +48,10 @@ class YamlProviderSpec extends ObjectBehavior
     {
         $this->hasFixtureDependencies()->shouldReturn(true);
     }
-
-    function it_should_yaml_file_type()
-    {
-        $this->getFileType()->shouldReturn('.yml');
-    }
+     function it_should_load_a_php_fixture()
+     {
+         $this->readFile(__DIR__ . '/product.php');
+         $this->getModelType()->shouldReturn('catalog/product');
+         $this->hasFixtureDependencies()->shouldBe(false);
+     }
 }

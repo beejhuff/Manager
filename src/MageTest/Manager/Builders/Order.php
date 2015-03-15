@@ -53,6 +53,7 @@ class Order extends AbstractBuilder implements BuilderInterface
      */
     public function build()
     {
+        $this->model->setData($this->attributes);
         $this->model->setStoreId($this->model->getStoreId());
 
         $this->model->getPayment()->importData(array('method' => $this->attributes['payment_method']));

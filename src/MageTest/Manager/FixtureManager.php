@@ -1,12 +1,15 @@
 <?php
 namespace MageTest\Manager;
 
+use MageTest\Manager\Attributes\Provider\PhpProvider;
+use MageTest\Manager\Attributes\Provider\YamlProvider;
 use MageTest\Manager\Attributes\Provider\ProviderInterface;
 use MageTest\Manager\Builders\BuilderInterface;
 use MageTest\Manager\Builders;
 
 /**
  * Class FixtureManager
+ *
  * @package MageTest\Manager
  */
 class FixtureManager
@@ -14,12 +17,12 @@ class FixtureManager
     /**
      * @var array
      */
-    private $fixtures;
+    private $fixtures = array();
 
     /**
      * @var array
      */
-    private $builders;
+    private $builders = array();
 
     /* @var \MageTest\Manager\Attributes\Provider\ProviderInterface */
     private $attributesProvider;
@@ -29,57 +32,53 @@ class FixtureManager
      */
     public function __construct(ProviderInterface $attributesProvider)
     {
-        $this->fixtures = array();
-        $this->builders = array();
         $this->attributesProvider = $attributesProvider;
     }
 
     /**
-     * @param $fixtureFile
+     * @param       $fixtureType
+     * @param null  $userFixtureFile
+     * @param array $overrides
+     * @internal param $fixtureFile
      * @return mixed
      */
-    public function loadFixture($fixtureType, $userFixtureFile = null)
+    public function loadFixture($fixtureType, $userFixtureFile = null, array $overrides = null)
     {
         $attributesProvider = clone $this->attributesProvider;
-
-        if(!is_null($userFixtureFile))
-        {
+        if (!is_null($userFixtureFile)) {
             $this->fixtureFileExists($userFixtureFile);
             $attributesProvider->readFile($userFixtureFile);
         } else {
-            $fixtureFile = $this->getDefaultFixtureTemplate($fixtureType);
-            $this->fixtureFileExists($fixtureFile);
-            $attributesProvider->readFile($fixtureFile);
+            $attributesProvider->readFile($this->getFallbackFixture($fixtureType));
+        }
+        // Override attributes and add non-existing ones too
+        if ($overrides) {
+            $attributesProvider->overrideAttributes($overrides);
         }
 
+        // Fetch the correct builder instance
         $builder = $this->getBuilder($attributesProvider->getModelType());
+        // Give the attributes for the builder to construct a model with
         $builder->setAttributes($attributesProvider->readAttributes());
 
-        if($attributesProvider->hasFixtureDependencies())
-        {
-            foreach($attributesProvider->getFixtureDependencies() as $dependency)
-            {
-                $withDependency = 'with' . $this->getFixtureTemplate($dependency);
+        if ($attributesProvider->hasFixtureDependencies()) {
+            // Load dependencies recursively
+            foreach ($attributesProvider->getFixtureDependencies() as $dependency) {
+                $withDependency = 'with' . $this->getFallbackModel($dependency);
                 $builder->$withDependency($this->loadFixture($dependency));
             }
         }
-
         return $this->create($attributesProvider->getModelType(), $builder);
     }
 
     /**
-     * @param $name
+     * @param                  $name
      * @param BuilderInterface $builder
      * @return mixed
      * @throws \InvalidArgumentException
      */
     public function create($name, BuilderInterface $builder)
     {
-        if($this->hasFixture($name))
-        {
-            throw new \InvalidArgumentException("Fixture $name has already been set. Please use unique names.");
-        }
-
         $model = $builder->build();
 
         \Mage::app()->setCurrentStore(\Mage_Core_Model_App::ADMIN_STORE_ID);
@@ -96,24 +95,11 @@ class FixtureManager
      */
     public function getFixture($name)
     {
-        if(!$this->hasFixture($name))
-        {
+        if (!$this->hasFixture($name)) {
             throw new \InvalidArgumentException("Could not find a fixture: $name");
         }
-        return $this->fixtures[$name];
-    }
 
-    /**
-     * Deletes all the magento fixtures
-     */
-    public function clear()
-    {
-        foreach ($this->fixtures as $fixture) {
-            \Mage::app()->setCurrentStore(\Mage_Core_Model_App::ADMIN_STORE_ID);
-            $fixture->delete();
-            \Mage::app()->setCurrentStore(\Mage_Core_Model_App::DISTRO_STORE_ID);
-        }
-        $this->fixtures = array();
+        return $this->fixtures[$name];
     }
 
     /**
@@ -125,10 +111,24 @@ class FixtureManager
     }
 
     /**
+     * Deletes all the magento fixtures
+     */
+    public function clear()
+    {
+        foreach ($this->fixtures as $model) {
+            \Mage::app()->setCurrentStore(\Mage_Core_Model_App::ADMIN_STORE_ID);
+            $model->delete();
+            \Mage::app()->setCurrentStore(\Mage_Core_Model_App::DISTRO_STORE_ID);
+        }
+        $this->fixtures = array();
+    }
+
+    /**
      * @param $name
      * @return bool
      */
-    private function hasBuilder($name) {
+    private function hasBuilder($name)
+    {
         return array_key_exists($name, $this->builders);
     }
 
@@ -138,19 +138,23 @@ class FixtureManager
      */
     private function getBuilder($modelType)
     {
-        if($this->hasBuilder($modelType))
-        {
+        if ($this->hasBuilder($modelType)) {
             return $this->builders[$modelType];
         }
 
-        switch($modelType)
-        {
-            case 'admin/user': return $this->builders[$modelType] = new Builders\Admin($modelType);
-            case 'customer/address': return $this->builders[$modelType] = new Builders\Address($modelType);
-            case 'customer/customer': return $this->builders[$modelType] = new Builders\Customer($modelType);
-            case 'catalog/product': return $this->builders[$modelType] = new Builders\Product($modelType);
-            case 'sales/quote': return $this->builders[$modelType] = new Builders\Order($modelType);
-            default : return $this->builders[$modelType] = new Builders\General($modelType);
+        switch ($modelType) {
+            case 'admin/user':
+                return $this->builders[$modelType] = new Builders\Admin($modelType);
+            case 'customer/address':
+                return $this->builders[$modelType] = new Builders\Address($modelType);
+            case 'customer/customer':
+                return $this->builders[$modelType] = new Builders\Customer($modelType);
+            case 'catalog/product':
+                return $this->builders[$modelType] = new Builders\Product($modelType);
+            case 'sales/quote':
+                return $this->builders[$modelType] = new Builders\Order($modelType);
+            default :
+                return $this->builders[$modelType] = new Builders\General($modelType);
         }
     }
 
@@ -166,29 +170,88 @@ class FixtureManager
     }
 
     /**
-     * @param $dependency
+     * @param        $fixtureType
+     * @param string $fileType
      * @return string
      */
-    private function getFixtureTemplate($dependency)
+    private function getDefaultFixtureTemplate($fixtureType, $fileType = '.yml')
     {
-        $fixtureTemplate = explode('/', $dependency);
-        return ucfirst($fixtureTemplate[1]);
+        $filePath = __DIR__ . '/Fixtures/';
+        switch ($fixtureType) {
+            case 'admin/user':
+                return $filePath . 'admin' . $fileType;
+            case 'customer/address':
+                return $filePath . 'address' . $fileType;
+            case 'customer/customer':
+                return $filePath . 'customer' . $fileType;
+            case 'catalog/product':
+                return $filePath . 'product' . $fileType;
+            case 'sales/quote':
+                return $filePath . 'order' . $fileType;
+        }
+    }
+
+    /**
+     *  Get the default fixture path
+     *  TODO: don't use getcwd()?
+     *
+     * @param      $fixtureType
+     * @param null $type
+     * @return string
+     */
+    private function getCustomFixtureTemplate($fixtureType, $type = null)
+    {
+        $parts = explode("/", $fixtureType);
+        return implode('', array(
+                getcwd() . '/tests/fixtures/',
+                strtolower($parts[1]),
+                $type ? : '.yml'
+            )
+        );
     }
 
     /**
      * @param $fixtureType
      * @return string
      */
-    private function getDefaultFixtureTemplate($fixtureType)
+    private function getFallbackFixture($fixtureType)
     {
-        $filePath = __DIR__ . '/Fixtures/';
-        switch($fixtureType)
-        {
-            case 'admin/user': return $filePath . 'Admin.yml';
-            case 'customer/address': return $filePath . 'Address.yml';
-            case 'customer/customer': return $filePath . 'Customer.yml';
-            case 'catalog/product': return $filePath . 'Product.yml';
-            case 'sales/quote': return $filePath . 'Order.yml';
+        // custom php
+        if (file_exists($fixturePath = $this->getCustomFixtureTemplate($fixtureType, '.php'))) {
+            return $fixturePath;
         }
+        // custom yaml
+        if (file_exists($fixturePath = $this->getCustomFixtureTemplate($fixtureType, '.yml'))) {
+            return $fixturePath;
+        }
+        // default php
+        if (file_exists($fixturePath = $this->getDefaultFixtureTemplate($fixtureType, '.php'))) {
+            return $fixturePath;
+        }
+        // default yaml
+        return $this->getDefaultFixtureTemplate($fixtureType);
     }
+
+    /**
+     * @param $dependency
+     * @return string
+     */
+    private function getFallbackModel($dependency)
+    {
+        $attributesProvider = clone $this->attributesProvider;
+        $attributesProvider->readFile($this->getFallbackFixture($dependency));
+        $dependencyType = $attributesProvider->getModelType();
+        return $this->parseDependencyModel($dependencyType);
+    }
+
+    /**
+     * @param $dependencyType
+     * @return string
+     */
+    private function parseDependencyModel($dependencyType)
+    {
+        preg_match("/\/(.*)/", $dependencyType, $matches);
+        return ucfirst($matches[1]);
+    }
+
 }

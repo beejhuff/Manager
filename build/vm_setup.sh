@@ -3,6 +3,10 @@
 #need this to get 'libapache2-mod-fastcgi'
 sudo sed -i "/^# deb.*multiverse/ s/^# //" /etc/apt/sources.list
 sudo apt-get update
+sudo apt-get install python-software-properties
+sudo apt-get update
+sudo add-apt-repository ppa:ondrej/php5-oldstable
+sudo apt-get update
 
 sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password root'
 sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password root'

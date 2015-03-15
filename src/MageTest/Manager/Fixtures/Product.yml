@@ -1,7 +1,7 @@
 catalog/product:
-    sku: testsku123
+    sku: testsku1232
     attribute_set_id: 9
-    name: product name
+    name: named product
     weight: 2
     price: 100
     description: Product description
