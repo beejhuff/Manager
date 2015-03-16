@@ -22,7 +22,7 @@ class FixtureManager
     /**
      * @var array
      */
-    private $fixtures = array();
+    private static $fixtures = array();
 
     /**
      * @var array
@@ -97,13 +97,13 @@ class FixtureManager
             }
             Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
             Factory::resetMultiplier();
-            return $this->fixtures[$name] = $models;
+            return static::$fixtures[$name] = $models;
         }
         $model = $builder->build();
         Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
         $model->save();
         Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
-        return $this->fixtures[$name] = $model;
+        return static::$fixtures[$name] = $model;
     }
 
     /**
@@ -121,17 +121,17 @@ class FixtureManager
         }
         // A number was given, and indeed the fixtures key is an array,
         // then go ahead and return the wanted number
-        if ($number && is_array($this->fixtures[$name])) {
-            return $this->fixtures[$name][$number];
+        if ($number && is_array(static::$fixtures[$name])) {
+            return static::$fixtures[$name][$number];
         }
         // If no number is specified as argument, then return the first one off
         // fixtures the array
-        if (is_array($this->fixtures[$name])) {
-            return $this->fixtures[$name][0];
+        if (is_array(static::$fixtures[$name])) {
+            return static::$fixtures[$name][0];
         }
         // Lastly, if its not an array and no number was given, just return
         // the fixture that was queried for
-        return $this->fixtures[$name];
+        return static::$fixtures[$name];
     }
 
     /**
@@ -139,7 +139,7 @@ class FixtureManager
      * @return bool
      */
     private function hasFixture($name) {
-        return array_key_exists($name, $this->fixtures);
+        return array_key_exists($name, static::$fixtures);
     }
 
     /**
@@ -147,12 +147,20 @@ class FixtureManager
      */
     public function clear()
     {
-        foreach ($this->fixtures as $model) {
-            Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
-            $model->delete();
-            Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
+        foreach (static::$fixtures as $model) {
+            if (is_array($model)) {
+                foreach ($model as $fixture) {
+                    Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+                    $fixture->delete();
+                    Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
+                }
+            } else {
+                Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+                $model->delete();
+                Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
+            }
         }
-        $this->fixtures = array();
+        static::$fixtures = array();
     }
 
     /**
@@ -289,7 +297,7 @@ class FixtureManager
      */
     public function getFixtures()
     {
-        return $this->fixtures;
+        return static::$fixtures;
     }
 
 }

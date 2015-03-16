@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace MageTest\Manager;
 
@@ -47,15 +47,8 @@ class Factory
      */
     public static function make($model, array $overrides = array(), $fixtureFile = null)
     {
-        return (new static(null, null, static::$multiplier))->fixtureManager->loadFixture($model, $fixtureFile, $overrides, static::$multiplier);
-    }
-
-    /**
-     * @return mixed
-     */
-    public static function getModel()
-    {
-        return static::$model;
+        return (new static(null, null, static::$multiplier))
+            ->fixtureManager->loadFixture($model, $fixtureFile, $overrides, static::$multiplier);
     }
 
     /**
@@ -63,7 +56,7 @@ class Factory
      */
     public static function clear()
     {
-//        return $this->fixtureManager->clear();
+        return (new static)->fixtureManager->clear();
     }
 
     /**
