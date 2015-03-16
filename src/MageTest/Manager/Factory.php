@@ -21,7 +21,7 @@ class Factory
     /**
      * @var FixtureManager
      */
-    protected $fixtureManager;
+    private $fixtureManager;
 
     /**
      * @var
@@ -63,7 +63,7 @@ class Factory
      */
     public static function clear()
     {
-        static::$fixtureManager->clear();
+//        return $this->fixtureManager->clear();
     }
 
     /**

@@ -72,7 +72,7 @@ class FixtureManager
         if ($attributesProvider->hasFixtureDependencies()) {
             // Load dependencies recursively
             foreach ($attributesProvider->getFixtureDependencies() as $dependency) {
-                $withDependency = 'with' . $this->getFallbackModel($dependency);
+                $withDependency = 'with' . $this->getDependencyModel($dependency);
                 $builder->$withDependency($this->loadFixture($dependency));
             }
         }
@@ -258,7 +258,6 @@ class FixtureManager
         if (file_exists($fixturePath = $this->getCustomFixtureTemplate($fixtureType, '.yml'))) {
             return $fixturePath;
         }
-
         // default yaml
         return $this->getDefaultFixtureTemplate($fixtureType, '.yml');
     }
@@ -267,7 +266,7 @@ class FixtureManager
      * @param $dependency
      * @return string
      */
-    private function getFallbackModel($dependency)
+    private function getDependencyModel($dependency)
     {
         $attributesProvider = clone $this->attributesProvider;
         $attributesProvider->readFile($this->getFallbackFixture($dependency));
@@ -283,6 +282,14 @@ class FixtureManager
     {
         preg_match("/\/(.*)/", $dependencyType, $matches);
         return ucfirst($matches[1]);
+    }
+
+    /**
+     * @return array
+     */
+    public function getFixtures()
+    {
+        return $this->fixtures;
     }
 
 }

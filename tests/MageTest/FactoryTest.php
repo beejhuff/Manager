@@ -15,6 +15,11 @@ class FactoryTest extends WebTestCase
         parent::setUp();
     }
 
+    public function tearDown()
+    {
+        Factory::clear();
+    }
+
     public function testCreateSimpleProduct()
     {
         $products = Factory::times(3)->make('catalog/product', ['name' => 'foo']);
