@@ -3,8 +3,6 @@
 namespace MageTest\Manager;
 
 use MageTest\Manager\Attributes\Provider\AttributesProvider;
-use MageTest\Manager\Attributes\Provider\PhpProvider;
-use MageTest\Manager\Attributes\Provider\YamlProvider;
 
 /**
  * Class Factory
