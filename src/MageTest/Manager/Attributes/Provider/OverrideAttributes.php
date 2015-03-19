@@ -41,7 +41,7 @@ trait OverrideAttributes
         $type = $this->getModelType();
         foreach ($attributes as $key => $value) {
             if (!array_key_exists($key, $this->model[$type])) {
-                $this->model[$type][$key] = $value;
+                $this->model[$type]['attributes'][$key] = $value;
             }
         }
     }
