@@ -18,6 +18,7 @@ class FactoryTest extends WebTestCase
     public function tearDown()
     {
         Factory::clear();
+        parent::tearDown();
     }
 
     public function testCreateSimpleProduct()

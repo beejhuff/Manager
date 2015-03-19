@@ -53,19 +53,23 @@ class FixtureManager
     public function loadFixture($fixtureType, $userFixtureFile = null, array $overrides = null, $multiplier = null)
     {
         $attributesProvider = clone $this->attributesProvider;
+
+        // Fetch a fixture file
         if (!is_null($userFixtureFile)) {
             $this->fixtureFileExists($userFixtureFile);
             $attributesProvider->readFile($userFixtureFile);
         } else {
             $attributesProvider->readFile($this->getFallbackFixture($fixtureType));
         }
-        // Override attributes and add non-existing ones too
+
+        // ...and override attributes + add non-existing ones too
         if ($overrides) {
             $attributesProvider->overrideAttributes($overrides);
         }
 
         // Fetch the correct builder instance
         $builder = $this->getBuilder($attributesProvider->getModelType());
+
         // Give the attributes for the builder to construct a model with
         $builder->setAttributes($attributesProvider->readAttributes());
 
