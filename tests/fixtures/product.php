@@ -3,8 +3,8 @@
 return array(
     'catalog/product' => array(
         'attributes' => array(
-            'sku' => $this->faker->unique()->randomDigit,
-            'attribute_set_id' => 9,
+            'sku' => $this->faker->ean,
+            'attribute_set_id' => 1,
             'name' => 'foobar',
             'weight' => 2,
             'price' => 100,
@@ -14,7 +14,7 @@ return array(
             'type_id' => 'simple',
             'visibility' => 4,
             'status' => 1,
-            'stock_data' => array( 'is_in_stock' => 1, 'qty' => 99999 ),
+            'stock_data' => array( 'is_in_stock' => 1, 'qty' => 100 ),
             'website_ids' => array(1)
         )
     )
