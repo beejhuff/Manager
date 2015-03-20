@@ -16,14 +16,14 @@ sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again p
 sudo apt-get -y install mysql-server
 
 echo 'CONFIGURING nginx'
-sudo touch /etc/nginx/sites-available/manager.dev
 sudo rm /etc/nginx/sites-available/manager.dev
-sudo bash -c "cat >> /etc/nginx/sites-available/manager.dev <<EOF
+sudo touch /etc/nginx/sites-available/manager.dev
+sudo cat > /etc/nginx/sites-available/manager.dev <<"EOF"
 server {
     listen 80;
 
-    root /vagrant/vendor/magetest/magento/src;
-    index index.html index.php;
+    root /vagrant/vendor/magento/core;
+    index index.php;
     server_name manager.dev;
 
     location / {
@@ -38,7 +38,7 @@ server {
         expires off;
         fastcgi_split_path_info ^(.+\.php)(/.+)$;
         fastcgi_pass unix:/var/run/php5-fpm.sock;
-        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+#       fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
         fastcgi_param  MAGE_RUN_CODE default;
         fastcgi_param  MAGE_RUN_TYPE store;
         #fastcgi_pass     127.0.0.1:9000;
@@ -46,7 +46,7 @@ server {
         include fastcgi_params;
     }
 }
-EOF"
+EOF
 
 echo 'ENABLE nginx configuration'
 sudo sed -i "s/;listen.owner = .*/listen.owner = www-data/" /etc/php5/fpm/pool.d/www.conf
@@ -66,11 +66,11 @@ sudo sed -i "s#date\.timezone.*#date\.timezone = \"Europe\/London\"#" /etc/php5/
 sudo /etc/init.d/php5-fpm restart
 
 echo 'INSTALLING magento...'
-wget https://raw.github.com/netz98/n98-magerun/master/n98-magerun.phar && sudo chmod +x n98-magerun.phar
-php n98-magerun.phar install --noDownload --dbHost="127.0.0.1" --dbUser="root" --dbPass="topsecret" --dbName="magento" --useDefaultConfigParams=yes --installationFolder="/vagrant/vendor/magetest/magento/src" --baseUrl="http://manager.dev/"
+wget --quiet https://raw.github.com/netz98/n98-magerun/master/n98-magerun.phar && sudo chmod +x n98-magerun.phar
+php n98-magerun.phar install --noDownload --dbHost="127.0.0.1" --dbUser="root" --dbPass="topsecret" --dbName="magento" --useDefaultConfigParams=yes --installationFolder="/vagrant/vendor/magento/core" --baseUrl="http://manager.dev/"
 rm n98-magerun.phar
 
-sed -i "s/files/db/" /vagrant/vendor/magetest/magento/src/app/etc/local.xml
+sed -i "s/files/db/" /vagrant/vendor/magento/core/app/etc/local.xml
 
 echo 'SETTING hostname.'
 sudo bash -c "cat >> /etc/hosts <<EOF

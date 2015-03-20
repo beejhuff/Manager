@@ -39,7 +39,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vb.customize [
       "modifyvm", :id,
       "--memory", "1024",
-      "--name", "MageTest"
+      "--name", "MageTest2"
     ]
   end
 

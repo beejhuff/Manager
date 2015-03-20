@@ -18,18 +18,18 @@
     "require-dev": {
         "behat/mink": "~1.6.0",
         "behat/mink-goutte-driver": "~1.1",
-        "magetest/magento": "~1.8.1.0",
+        "magento/core": "1.9.1.0",
         "phpspec/phpspec": "~2.1",
         "phpunit/phpunit": "~4.5"
     },
     "autoload": {
         "psr-0": {
             "": [
-                "vendor/magetest/magento/src/app",
-                "vendor/magetest/magento/src/lib",
-                "vendor/magetest/magento/src/app/code/local",
-                "vendor/magetest/magento/src/app/code/community",
-                "vendor/magetest/magento/src/app/code/core"
+                "vendor/magento/core/app",
+                "vendor/magento/core/lib",
+                "vendor/magento/core/app/code/local",
+                "vendor/magento/core/app/code/community",
+                "vendor/magento/core/app/code/core"
             ],
             "MageTest\\Manager": ["src", "tests"]
         }

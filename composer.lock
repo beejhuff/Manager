@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "0c374c4724c05ac4c5f9211740121a20",
+    "hash": "0430c5a4e067d39690e725d8ef3870eb",
     "packages": [
         {
             "name": "fzaninotto/faker",
@@ -531,48 +531,111 @@
             "time": "2014-10-12 19:18:40"
         },
         {
-            "name": "magetest/magento",
-            "version": "v1.8.1.0",
+            "name": "magento/core",
+            "version": "1.9.1.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/MageTest/magento.git",
-                "reference": "2d3fa2dd48821ef25118512023b5266a98a00562"
+                "url": "https://github.com/bragento/magento-core.git",
+                "reference": "e98ff4ed632c70be2c42168338af3e8a68a5f989"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/MageTest/magento/zipball/2d3fa2dd48821ef25118512023b5266a98a00562",
-                "reference": "2d3fa2dd48821ef25118512023b5266a98a00562",
+                "url": "https://api.github.com/repos/bragento/magento-core/zipball/e98ff4ed632c70be2c42168338af3e8a68a5f989",
+                "reference": "e98ff4ed632c70be2c42168338af3e8a68a5f989",
                 "shasum": ""
             },
-            "type": "library",
+            "type": "magento-core",
+            "extra": {
+                "map": [
+                    [
+                        "app",
+                        "app"
+                    ],
+                    [
+                        "downloader",
+                        "downloader"
+                    ],
+                    [
+                        "errors",
+                        "errors"
+                    ],
+                    [
+                        "includes",
+                        "includes"
+                    ],
+                    [
+                        "js",
+                        "js"
+                    ],
+                    [
+                        "lib",
+                        "lib"
+                    ],
+                    [
+                        "media",
+                        "media"
+                    ],
+                    [
+                        "pkginfo",
+                        "pkginfo"
+                    ],
+                    [
+                        "shell",
+                        "shell"
+                    ],
+                    [
+                        "skin",
+                        "skin"
+                    ],
+                    [
+                        "var",
+                        "var"
+                    ],
+                    [
+                        ".htaccess",
+                        ".htaccess"
+                    ],
+                    [
+                        "api.php",
+                        "api.php"
+                    ],
+                    [
+                        "cron.php",
+                        "cron.php"
+                    ],
+                    [
+                        "cron.sh",
+                        "cron.sh"
+                    ],
+                    [
+                        "favicon.ico",
+                        "favicon.ico"
+                    ],
+                    [
+                        "get.php",
+                        "get.php"
+                    ],
+                    [
+                        "index.php",
+                        "index.php"
+                    ],
+                    [
+                        "install.php",
+                        "install.php"
+                    ],
+                    [
+                        "mage",
+                        "mage"
+                    ]
+                ]
+            },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "OSL-3.0",
-                "AFL-3.0"
+                "OSL-3.0"
             ],
-            "authors": [
-                {
-                    "name": "Alistair Stead",
-                    "email": "astead@sessiondigital.com"
-                },
-                {
-                    "name": "Marco De Bortoli",
-                    "email": "marco.debortoli@sessiondigital.com"
-                },
-                {
-                    "name": "Other contributors",
-                    "homepage": "https://github.com/MageTest/contributors/contributors"
-                }
-            ],
-            "description": "Latest Magento community version stable releases",
+            "description": "Magento Core",
             "homepage": "http://www.magentocommerce.com",
-            "keywords": [
-                "1.x",
-                "community",
-                "magento",
-                "stable"
-            ],
-            "time": "2014-05-23 11:29:18"
+            "time": "2014-12-17 18:09:33"
         },
         {
             "name": "phpdocumentor/reflection-docblock",
