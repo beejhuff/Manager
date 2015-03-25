@@ -16,7 +16,7 @@ class OrderTest extends WebTestCase
         $this->adminLogin('admin', 'password123');
 
         $session = $this->getSession();
-        $session->visit(getenv('BASE_URL') . '/admin/sales_order/index');
+        $session->getPage()->clickLink('Orders');
         $this->assertSession()->pageTextContains($this->orderFixture->getIncrementId());
     }
 
@@ -27,7 +27,7 @@ class OrderTest extends WebTestCase
         $this->adminLogin('admin', 'password123');
 
         $session = $this->getSession();
-        $session->visit(getenv('BASE_URL') . '/admin/sales_order/index');
+        $session->getPage()->clickLink('Orders');
         $this->assertSession()->pageTextNotContains($this->orderFixture->getIncrementId());
     }
 }
