@@ -10,6 +10,7 @@ namespace MageTest\Manager\Attributes\Provider;
  */
 trait OverrideAttributes
 {
+
     /**
      *  Overrides previously defined attributes, and optionally adds new
      *

@@ -27,14 +27,17 @@ class Factory
     protected static $model;
 
     /**
-     * @param null $fixtureManager
-     * @param null $provider
-     * @param null $multiplier
+     * @param \MageTest\Manager\FixtureManager|null    $fixtureManager
+     * @param \MageTest\Manager\ProviderInterface|null $provider
+     * @param null                                     $multiplier
      */
-    public function __construct($fixtureManager = null, $provider = null, $multiplier = null)
-    {
+    public function __construct(
+        FixtureManager $fixtureManager = null,
+        ProviderInterface $provider = null,
+        $multiplier = null
+    ) {
         static::$multiplier = $multiplier;
-        $this->fixtureManager = $fixtureManager ? : new FixtureManager(new AttributesProvider);
+        $this->fixtureManager = $fixtureManager ? : new FixtureManager($provider ? : new AttributesProvider);
     }
 
     /**
@@ -72,6 +75,14 @@ class Factory
     public static function resetMultiplier()
     {
         static::$multiplier = 0;
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function prepareDb()
+    {
+        return (new static)->fixtureManager->prepareDb();
     }
 
 }

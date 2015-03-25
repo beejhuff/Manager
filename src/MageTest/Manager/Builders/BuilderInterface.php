@@ -2,6 +2,8 @@
 
 namespace MageTest\Manager\Builders;
 
+use MageTest\Manager\Cache\Storage;
+
 /**
  *
  * @package MageTest\Manager\Builders
@@ -12,9 +14,10 @@ interface BuilderInterface {
      * @param $modelType
      */
     /**
-     * @param $modelType
+     * @param                                 $modelType
+     * @param \MageTest\Manager\Cache\Storage $storage
      */
-    public function __construct($modelType);
+    public function __construct($modelType, Storage $storage);
 
     /**
      * Build fixture model

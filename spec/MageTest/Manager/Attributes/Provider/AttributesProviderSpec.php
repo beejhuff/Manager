@@ -2,13 +2,15 @@
 
 namespace spec\MageTest\Manager\Attributes\Provider;
 
+use MageTest\Manager\Attributes\Provider\FixtureValidator;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 
 class AttributesProviderSpec extends ObjectBehavior
 {
-    function let()
+    function let(FixtureValidator $fixtureValidator)
     {
+        $this->beConstructedWith($fixtureValidator);
         $this->readFile(getcwd() . '/src/MageTest/Manager/Fixtures/Address.yml');
     }
     function it_should_implement_provider_interface()
@@ -48,10 +50,18 @@ class AttributesProviderSpec extends ObjectBehavior
     {
         $this->hasFixtureDependencies()->shouldReturn(true);
     }
-     function it_should_load_a_php_fixture()
-     {
-         $this->readFile(__DIR__ . '/product.php');
-         $this->getModelType()->shouldReturn('catalog/product');
-         $this->hasFixtureDependencies()->shouldBe(false);
-     }
+
+    function it_should_load_a_php_fixture()
+    {
+        $this->readFile(getcwd() . '/tests/fixtures/order.php');
+        $this->getModelType()->shouldReturn('sales/quote');
+        $this->hasFixtureDependencies()->shouldBe(true);
+        $this->getFixtureDependencies()->shouldReturn(['catalog/product', 'customer/address']);
+    }
+
+    function it_should_protest_if_the_loader_does_not_exist()
+    {
+        $this->shouldThrow('Exception')->duringReadFile(__DIR__ . '/orders.foo');
+    }
+
 }

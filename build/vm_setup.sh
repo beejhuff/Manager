@@ -67,7 +67,7 @@ sudo /etc/init.d/php5-fpm restart
 
 echo 'INSTALLING magento...'
 wget --quiet https://raw.github.com/netz98/n98-magerun/master/n98-magerun.phar && sudo chmod +x n98-magerun.phar
-php n98-magerun.phar install --noDownload --dbHost="127.0.0.1" --dbUser="root" --dbPass="topsecret" --dbName="magento" --useDefaultConfigParams=yes --installationFolder="/vagrant/vendor/magento/core" --baseUrl="http://manager.dev/"
+php n98-magerun.phar install --noDownload --dbHost="127.0.0.1" --dbUser="root" --dbPass="topsecret" --dbName="magetest_manager_test" --useDefaultConfigParams=yes --installationFolder="/vagrant/vendor/magento/core" --baseUrl="http://manager.dev/"
 rm n98-magerun.phar
 
 sed -i "s/files/db/" /vagrant/vendor/magento/core/app/etc/local.xml

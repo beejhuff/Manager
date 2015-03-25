@@ -1,7 +1,9 @@
-<?php 
+<?php
 
 namespace MageTest\Manager\Attributes\Provider;
 
+use Exception;
+use MageTest\Manager\Attributes\Provider\Loader\Loader;
 use MageTest\Manager\Attributes\Provider\Loader\ParseFields;
 
 /**
@@ -19,17 +21,29 @@ class AttributesProvider implements ProviderInterface
     private $loader;
 
     /**
-     * @var
+     * @var array
      */
     private $model;
+
+    /**
+     * @var
+     */
+    private $validator;
+
+    /**
+     * @param FixtureValidator $validator
+     */
+    public function __construct(FixtureValidator $validator = null)
+    {
+        $this->validator = $validator ? : new FixtureValidator;
+    }
 
     /**
      * @return mixed
      */
     public function readAttributes()
     {
-        $type = $this->getModelType();
-        return $this->model[$type]['attributes'];
+        return $this->model[$this->getModelType()]['attributes'];
     }
 
     /**
@@ -49,15 +63,17 @@ class AttributesProvider implements ProviderInterface
     {
         $this->setLoader($file);
         $model = $this->loader->load($file);
+        $this->validator->validate($model);
 
-        if ($this->getFileType($file) !== 'php') {
-            if (!$this->loader instanceof ParseFields) {
-                throw new Exception('Your loader implementation needs to be able to parse its fields.');
-            }
-            $this->model = $this->loader->parseFields($model);
-        } else {
-            $this->model = $this->loader->load($file);
+        if ($this->isPhpType($file)) {
+            return $this->model = $this->loader->load($file);
         }
+
+        if (!$this->loader instanceof ParseFields) {
+            throw new Exception('Your loader implementation needs to be able to parse its fields.');
+        }
+
+        $this->model = $this->loader->parseFields($model);
     }
 
     /**
@@ -74,27 +90,23 @@ class AttributesProvider implements ProviderInterface
      */
     public function getFixtureDependencies()
     {
-        $dependencies = isset($this->model[$this->getModelType()]['depends']) ? $this->model[$this->getModelType()]['depends'] : null;
-        if (!is_array($dependencies)) {
-            return array($dependencies);
+        $dependencies = isset($this->model[$this->getModelType()]['depends'])
+            ? $this->model[$this->getModelType()]['depends']
+            : null;
+        if (!is_array($dependencies) && !is_null($dependencies)) {
+            return [$dependencies];
         }
         return $dependencies;
     }
 
     /**
      * @param $file
+     * @throws Exception
      * @return string
      */
     private function getFileType($file)
     {
-        if (strstr($file, '.yml')) {
-            return 'yml';
-        }
-
-        if (strstr($file, '.xml')) {
-            return 'xml';
-        }
-        return 'php';
+        return pathinfo($file, PATHINFO_EXTENSION);
     }
 
     /**
@@ -107,13 +119,39 @@ class AttributesProvider implements ProviderInterface
 
     /**
      * @param $file
+     * @throws \Exception
      * @return string
      */
     private function getLoader($file)
     {
         $fileType = $this->getFileType($file);
-        $loader = __NAMESPACE__ . '\\Loader\\' . ucfirst($fileType) . 'Loader';
-        return new $loader;
+        $loader = $this->buildLoaderClassPath($fileType);
+        if (!class_exists($loader)) {
+            throw new Exception('This loader does not exist: '.$loader);
+        }
+        $loaderInstance = new $loader;
+        if (!$loaderInstance instanceof Loader) {
+            throw new Exception('The loader must implement the Loader interface: '.$loader);
+        }
+        return $loaderInstance;
+    }
+
+    /**
+     * @param $file
+     * @return bool
+     */
+    private function isPhpType($file)
+    {
+        return $this->getFileType($file) == 'php';
+    }
+
+    /**
+     * @param $fileType
+     * @return string
+     */
+    private function buildLoaderClassPath($fileType)
+    {
+        return __NAMESPACE__ . '\\Loader\\' . ucfirst($fileType) . 'Loader';
     }
 
 }

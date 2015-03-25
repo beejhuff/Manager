@@ -56,7 +56,7 @@ class YmlLoader implements Loader, ParseFields
     private function parseModel($key)
     {
         preg_match("/[^ (]+/", $key, $matches);
-        return $matches[0];
+        return reset($matches);
     }
 
     /**
@@ -66,7 +66,7 @@ class YmlLoader implements Loader, ParseFields
     private function parseDependencies($key)
     {
         preg_match("/ \((.*)\)/", $key, $matches);
-        return $matches[1];
+        return end($matches);
     }
 
 }

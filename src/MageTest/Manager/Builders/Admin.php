@@ -14,7 +14,7 @@ class Admin extends AbstractBuilder implements BuilderInterface
     public function build()
     {
         $this->model->addData($this->attributes);
-        $this->model->save();
+        $this->saveModel($this->model);
 
         $this->addAdminRole();
 
@@ -28,6 +28,6 @@ class Admin extends AbstractBuilder implements BuilderInterface
         $role->setTreeLevel(1);
         $role->setRoleType('U');
         $role->setUserId($this->model->getId());
-        $role->save();
+        $this->saveModel($role);
     }
 }

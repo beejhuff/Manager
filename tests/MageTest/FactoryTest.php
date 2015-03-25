@@ -4,6 +4,7 @@ namespace MageTest;
 
 use MageTest\Manager\Factory;
 use MageTest\Manager\WebTestCase;
+use PHPUnit_Framework_TestCase;
 
 /**
  * 1. Check for custom php template
@@ -13,6 +14,7 @@ class FactoryTest extends WebTestCase
     public function setUp()
     {
         parent::setUp();
+        Factory::prepareDb();
     }
 
     public function tearDown()
@@ -23,7 +25,7 @@ class FactoryTest extends WebTestCase
 
     public function testCreateSimpleProduct()
     {
-        $products = Factory::times(3)->make('catalog/product', ['name' => 'foo']);
+        $products = Factory::times(3)->make('catalog/product', ['name' => 'foo', 'sku' => 'abc123']);
         $this->assertEquals(3, count($products));
         foreach ($products as $product) {
             $this->assertEquals('foo', $product->getName());

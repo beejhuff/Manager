@@ -14,7 +14,7 @@ class Customer extends AbstractBuilder implements BuilderInterface
     public function build()
     {
         $this->model->addData($this->attributes);
-        $this->model->save();
+        $this->saveModel($this->model);
         $this->model->setConfirmation(null);
         return $this->model;
     }
