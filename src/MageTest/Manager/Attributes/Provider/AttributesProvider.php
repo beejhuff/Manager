@@ -63,7 +63,6 @@ class AttributesProvider implements ProviderInterface
     {
         $this->setLoader($file);
         $model = $this->loader->load($file);
-        $this->validator->validate($model);
 
         if ($this->isPhpType($file)) {
             return $this->model = $this->loader->load($file);
@@ -74,6 +73,7 @@ class AttributesProvider implements ProviderInterface
         }
 
         $this->model = $this->loader->parseFields($model);
+        $this->validator->validate($this->model);
     }
 
     /**

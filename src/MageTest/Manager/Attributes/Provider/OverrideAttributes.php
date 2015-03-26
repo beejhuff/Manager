@@ -47,4 +47,9 @@ trait OverrideAttributes
         }
     }
 
+    /**
+     * @return string
+     */
+    abstract public function getModelType();
+
 }

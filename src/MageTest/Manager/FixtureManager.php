@@ -110,6 +110,7 @@ class FixtureManager
             }
             Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
             Factory::resetMultiplier();
+
             return static::$fixtures[$name] = $models;
         }
         $model = $builder->build();
@@ -181,7 +182,8 @@ class FixtureManager
      * @param $name
      * @return bool
      */
-    private function hasFixture($name) {
+    private function hasFixture($name)
+    {
         return array_key_exists($name, static::$fixtures);
     }
 
@@ -194,9 +196,10 @@ class FixtureManager
         return array_key_exists($name, $this->builders);
     }
 
+
     /**
      * @param $modelType
-     * @return Builders\Address|Builders\Customer|Builders\Order|Builders\Product
+     * @return Builders\Address|Builders\Admin|Builders\Customer|Builders\General|Builders\Order|Builders\Product
      */
     private function getBuilder($modelType)
     {
@@ -215,7 +218,7 @@ class FixtureManager
                 return $this->builders[$modelType] = new Builders\Product($modelType, $this->storage);
             case 'sales/quote':
                 return $this->builders[$modelType] = new Builders\Order($modelType, $this->storage);
-            default :
+            default:
                 return $this->builders[$modelType] = new Builders\General($modelType, $this->storage);
         }
     }
@@ -263,13 +266,20 @@ class FixtureManager
      */
     private function getCustomFixtureTemplate($fixtureType, $type = null)
     {
+        if (!is_string($type) and !is_null($type)) {
+            throw new InvalidArgumentException(
+                sprintf('2nd argument must have string type. %s given', [var_dump($type)])
+            );
+        }
         $parts = explode("/", $fixtureType);
-        return implode('', array(
+        return implode(
+            '',
+            array(
                 getcwd(),
                 static::CUSTOM_FIXTURES_DIR,
                 DIRECTORY_SEPARATOR,
                 end($parts) == 'quote' ? 'order' : end($parts),
-                $type ? : '.yml'
+                $type ?: '.yml'
             )
         );
     }

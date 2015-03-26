@@ -10,6 +10,10 @@ namespace MageTest\Manager\Attributes\Provider\Loader;
  */
 class XmlLoader implements Loader, ParseFields
 {
+    /**
+     * @var
+     */
+    private $xmlParser;
 
     /**
      * @param $xmlParser
