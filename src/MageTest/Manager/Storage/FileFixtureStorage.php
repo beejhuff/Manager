@@ -1,23 +1,24 @@
 <?php 
 
-namespace MageTest\Manager\Cache;
+namespace MageTest\Manager\Storage;
 
+use Mage_Core_Model_Abstract;
 use stdClass;
 
 
 /**
- * Class FileFixtureCache
+ * Class FileFixtureStorage
  *
- * @package MageTest\Manager\Cache
+ * @package MageTest\Manager\Storage
  */
 class FileFixtureStorage implements Storage
 {
 
     /**
-     * @param $model
+     * @param Mage_Core_Model_Abstract $model
      * @return mixed|void
      */
-    public function persistIdentifier($model)
+    public function persistIdentifier(Mage_Core_Model_Abstract $model)
     {
         $fixture = new stdClass;
         $fixture->resourceName = $model->getResourceName();

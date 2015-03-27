@@ -7,7 +7,8 @@ use Mage_Core_Model_App;
 use MageTest\Manager\Attributes\Provider\ProviderInterface;
 use MageTest\Manager\Builders\BuilderInterface;
 use MageTest\Manager\Builders;
-use MageTest\Manager\Cache\FileFixtureStorage;
+use MageTest\Manager\Storage\FileFixtureStorage;
+use MageTest\Manager\Storage\ModelRepository;
 
 /**
  * Class FixtureManager
@@ -42,13 +43,22 @@ class FixtureManager
     private $storage;
 
     /**
+     * @var
+     */
+    private $repository;
+
+    /**
      * @param ProviderInterface $attributesProvider
      * @param Storage           $storage
      */
-    public function __construct(ProviderInterface $attributesProvider, Storage $storage = null)
-    {
+    public function __construct(
+        ProviderInterface $attributesProvider,
+        Storage $storage = null,
+        ModelRepository $repository = null
+    ) {
         $this->attributesProvider = $attributesProvider;
         $this->storage = $storage ? : new FileFixtureStorage;
+        $this->repository = $repository ? : new ModelRepository;
     }
 
     /**
@@ -105,6 +115,7 @@ class FixtureManager
             while ($multiplier) {
                 $model = $builder->build();
                 Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+//                $models[] = $this->repository->persist($model);
                 $models[] = $this->saveModel($model);
                 $multiplier--;
             }
@@ -115,6 +126,7 @@ class FixtureManager
         }
         $model = $builder->build();
         Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+//        $model = $this->repository->persist($model);
         $this->saveModel($model);
         Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
         return static::$fixtures[$name] = $model;
@@ -157,11 +169,13 @@ class FixtureManager
             if (is_array($model)) {
                 foreach ($model as $fixture) {
                     Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+//                    $this->repository->rollBackTransaction($model);
                     $fixture->delete();
                     Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
                 }
             } else {
                 Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+//                $this->repository->rollBackTransaction($model);
                 $model->delete();
                 Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
             }

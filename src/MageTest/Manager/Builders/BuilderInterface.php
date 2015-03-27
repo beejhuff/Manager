@@ -2,7 +2,7 @@
 
 namespace MageTest\Manager\Builders;
 
-use MageTest\Manager\Cache\Storage;
+use MageTest\Manager\Storage\Storage;
 
 /**
  *
@@ -15,7 +15,7 @@ interface BuilderInterface {
      */
     /**
      * @param                                 $modelType
-     * @param \MageTest\Manager\Cache\Storage $storage
+     * @param \MageTest\Manager\Storage\Storage $storage
      */
     public function __construct($modelType, Storage $storage);
 

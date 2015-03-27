@@ -2,7 +2,7 @@
 namespace MageTest\Manager\Builders;
 
 use Mage;
-use MageTest\Manager\Cache\Storage;
+use MageTest\Manager\Storage\Storage;
 
 /**
  * Class AbstractBuilder
@@ -27,7 +27,7 @@ abstract class AbstractBuilder
 
     /**
      * @param                                 $modelType
-     * @param \MageTest\Manager\Cache\Storage $storage
+     * @param \MageTest\Manager\Storage\Storage $storage
      */
     public function __construct($modelType, Storage $storage)
     {

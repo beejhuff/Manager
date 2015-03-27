@@ -1,12 +1,14 @@
 <?php 
 
-namespace MageTest\Manager\Cache;
+namespace MageTest\Manager\Storage;
+
+use Mage_Core_Model_Abstract;
 
 
 /**
  * Interface Storage
  *
- * @package MageTest\Manager\Cache
+ * @package MageTest\Manager\Storage
  */
 interface Storage
 {
@@ -14,7 +16,7 @@ interface Storage
      * @param $model
      * @return mixed
      */
-    public function persistIdentifier($model);
+    public function persistIdentifier(Mage_Core_Model_Abstract $model);
 
     /**
      * @return mixed
