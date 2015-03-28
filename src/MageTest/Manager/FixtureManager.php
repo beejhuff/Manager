@@ -330,8 +330,9 @@ class FixtureManager
      */
     private function saveModel($model)
     {
+	$model->save();
         $this->storage->persistIdentifier($model);
-        return $model->save();
+	return $model;
     }
 
     /**
