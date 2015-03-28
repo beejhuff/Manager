@@ -66,6 +66,9 @@ class YmlLoader implements Loader, ParseFields
     private function parseDependencies($key)
     {
         preg_match("/ \((.*)\)/", $key, $matches);
+        if (strstr(end($matches), ' ')) {
+            return explode(" ", end($matches));
+        }
         return end($matches);
     }
 
