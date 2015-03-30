@@ -291,7 +291,7 @@ final class FixtureManager
     private function getFallbackFixture($fixtureType)
     {
         foreach (FixtureFallback::$sequence as $type) {
-            if (file_exists($fixture = $this->getCustomFixtureTemplate($type))) {
+            if (file_exists($fixture = $this->getCustomFixtureTemplate($fixtureType, $type))) {
                 return $fixture;
             }
         }
