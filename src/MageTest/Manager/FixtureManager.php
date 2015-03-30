@@ -14,7 +14,7 @@ use MageTest\Manager\Cache\FileFixtureStorage;
  *
  * @package MageTest\Manager
  */
-class FixtureManager
+final class FixtureManager
 {
     /**
      *  Where the user has to store its project specific fixtures
@@ -279,7 +279,7 @@ class FixtureManager
                 static::CUSTOM_FIXTURES_DIR,
                 DIRECTORY_SEPARATOR,
                 end($parts) == 'quote' ? 'order' : end($parts),
-                $type ?: '.yml'
+                $type ? : '.yml'
             )
         );
     }
@@ -290,15 +290,11 @@ class FixtureManager
      */
     private function getFallbackFixture($fixtureType)
     {
-        // custom php fixture
-        if (file_exists($fixturePath = $this->getCustomFixtureTemplate($fixtureType, '.php'))) {
-            return $fixturePath;
+        foreach (FixtureFallback::$sequence as $type) {
+            if (file_exists($fixture = $this->getCustomFixtureTemplate($type))) {
+                return $fixture;
+            }
         }
-        // custom yaml fixture
-        if (file_exists($fixturePath = $this->getCustomFixtureTemplate($fixtureType))) {
-            return $fixturePath;
-        }
-        // default yaml fixture
         return $this->getDefaultFixtureTemplate($fixtureType);
     }
 
@@ -330,9 +326,9 @@ class FixtureManager
      */
     private function saveModel($model)
     {
-	$model->save();
+	    $model->save();
         $this->storage->persistIdentifier($model);
-	return $model;
+	    return $model;
     }
 
     /**
