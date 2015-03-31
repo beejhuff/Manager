@@ -41,6 +41,8 @@ final class FixtureManager
      */
     private $storage;
 
+    private $dependencies;
+
     /**
      * @param ProviderInterface $attributesProvider
      * @param Storage           $storage
@@ -83,13 +85,55 @@ final class FixtureManager
         $builder->setAttributes($attributesProvider->readAttributes());
 
         // Load any dependencies recursively
-        if ($attributesProvider->hasFixtureDependencies()) {
-            foreach ($attributesProvider->getFixtureDependencies() as $dependency) {
+//        if ($attributesProvider->hasFixtureDependencies()) {
+//            foreach ($attributesProvider->getFixtureDependencies() as $dependency) {
+//                $withDependency = 'with' . $this->getDependencyModel($dependency);
+//                $builder->$withDependency($this->loadFixture($dependency));
+//            }
+//        }
+//        die(var_dump($this->mergeDependencies($attributesProvider, $builder)->hasDependencies()));
+
+        if ($this->mergeDependencies($attributesProvider, $builder)->hasDependencies()) {
+            foreach ($this->getDependencies() as $dependency) {
                 $withDependency = 'with' . $this->getDependencyModel($dependency);
+                $builder::$recursiveDepth++;
+                if ($builder::$recursiveDepth > 1) continue;
                 $builder->$withDependency($this->loadFixture($dependency));
             }
         }
+        // Clear dependencies
+        unset($this->dependencies);
         return $this->create($attributesProvider->getModelType(), $builder, $multiplier);
+    }
+
+    /**
+     * @param ProviderInterface $attributesProvider
+     * @param BuilderInterface  $builder
+     * @return $this
+     */
+    private function mergeDependencies(ProviderInterface $attributesProvider, BuilderInterface $builder)
+    {
+        $this->dependencies = $attributesProvider->getFixtureDependencies() ? : [];
+        if (count($builder->getDependencies())) {
+            $this->dependencies = array_merge($this->dependencies, $builder->getDependencies());
+        }
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    private function hasDependencies()
+    {
+        return count($this->dependencies) ? true : false;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function getDependencies()
+    {
+        return $this->dependencies;
     }
 
     /**
@@ -243,16 +287,12 @@ final class FixtureManager
     {
         $filePath = __DIR__ . '/Fixtures/';
         switch ($fixtureType) {
-            case 'admin/user':
-                return $filePath . 'Admin' . $fileType;
-            case 'customer/address':
-                return $filePath . 'Address' . $fileType;
-            case 'customer/customer':
-                return $filePath . 'Customer' . $fileType;
-            case 'catalog/product':
-                return $filePath . 'Product' . $fileType;
-            case 'sales/quote':
-                return $filePath . 'Order' . $fileType;
+            case 'admin/user': return $filePath . 'Admin' . $fileType;
+            case 'customer/address': return $filePath . 'Address' . $fileType;
+            case 'customer/customer': return $filePath . 'Customer' . $fileType;
+            case 'catalog/product': return $filePath . 'Product' . $fileType;
+            case 'catalog/product/configurable' : return $filePath . 'Configurable' . $fileType;
+            case 'sales/quote': return $filePath . 'Order' . $fileType;
         }
     }
 

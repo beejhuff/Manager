@@ -3,9 +3,9 @@
 return array(
     'catalog/product' => array(
         'attributes' => array(
-            'sku' => $this->faker->ean,
+            'sku' => '123123',
             'attribute_set_id' => 4,
-            'name' => $this->faker->name,
+            'name' => 'test',
             'weight' => 2,
             'price' => 100,
             'description' => $this->faker->text,

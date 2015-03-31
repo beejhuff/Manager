@@ -26,6 +26,16 @@ abstract class AbstractBuilder
     private $storage;
 
     /**
+     * @var null|array
+     */
+    protected $dependencies;
+
+    /**
+     * @var int
+     */
+    public static $recursiveDepth = 0;
+
+    /**
      * @param                                 $modelType
      * @param \MageTest\Manager\Cache\Storage $storage
      */
@@ -56,10 +66,22 @@ abstract class AbstractBuilder
         return $ids;
     }
 
+    /**
+     * @param $model
+     * @return mixed
+     */
     public function saveModel($model)
     {
         $this->storage->persistIdentifier($model);
         return $model->save();
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getDependencies()
+    {
+        return $this->dependencies;
     }
 
 }

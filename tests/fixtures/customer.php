@@ -5,7 +5,7 @@ return array(
         'attributes' => array(
             'firstname' => $this->faker->firstname,
             'lastname' => $this->faker->lastname,
-            'email' => 'john@doe.de',
+            'email' => $this->faker->email,
             'password' => 'topsecret',
             'website_id' => 1,
             'store' => 1,
