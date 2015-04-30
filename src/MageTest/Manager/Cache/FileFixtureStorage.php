@@ -45,7 +45,9 @@ class FileFixtureStorage implements Storage
      */
     public function truncate()
     {
-        unlink(__DIR__ . '/storage');
+        if (file_exists(__DIR__ . '/storage')) {
+            unlink(__DIR__ . '/storage');            
+        }
     }
 
     /**
