@@ -11,7 +11,7 @@ class FactoryTest extends WebTestCase
     public function setUp()
     {
         parent::setUp();
-        Factory::prepareDb();
+//        Factory::prepareDb();
     }
 
     public function tearDown()
