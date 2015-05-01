@@ -86,7 +86,21 @@ final class FixtureManager
         if ($attributesProvider->hasFixtureDependencies()) {
             foreach ($attributesProvider->getFixtureDependencies() as $dependency) {
                 $withDependency = 'with' . $this->getDependencyModel($dependency);
-                $builder->$withDependency($this->loadFixture($dependency));
+                if ($this->hasFixture($dependency)) {
+                    // When building models that has a dependency, it is nice to be able to
+                    // first build the dependency and then the dependant model. The trick is
+                    // to check if there is a model already built and if so, reuse that guy
+                    // when building the dependant class
+                    if (is_array(self::$fixtures[$dependency])) {
+                        // If they key holds an array of models, then just use the first one
+                        $builder->$withDependency(reset(self::$fixtures[$dependency]));
+                    } else {
+                        $builder->$withDependency(self::$fixtures[$dependency]);
+                    }
+                } else {
+                    // Otherwise, just go ahead and create a new model
+                    $builder->$withDependency($this->loadFixture($dependency));
+                }
             }
         }
         return $this->create($attributesProvider->getModelType(), $builder, $multiplier);
@@ -216,6 +230,8 @@ final class FixtureManager
                 return $this->builders[$modelType] = new Builders\Customer($modelType, $this->storage);
             case 'catalog/product':
                 return $this->builders[$modelType] = new Builders\Product($modelType, $this->storage);
+            case 'catalog/category':
+                return $this->builders[$modelType] = new Builders\Category($modelType, $this->storage);
             case 'sales/quote':
                 return $this->builders[$modelType] = new Builders\Order($modelType, $this->storage);
             default:
@@ -244,14 +260,29 @@ final class FixtureManager
         $filePath = __DIR__ . '/Fixtures/';
         switch ($fixtureType) {
             case 'admin/user':
+                if (file_exists($adminFixture = $filePath . 'admin.php')) {
+                    return $adminFixture;
+                }
                 return $filePath . 'Admin' . $fileType;
             case 'customer/address':
+                if (file_exists($addressFixture = $filePath . 'address.php')) {
+                    return $addressFixture;
+                }
                 return $filePath . 'Address' . $fileType;
             case 'customer/customer':
+                if (file_exists($customerFixture = $filePath . 'customer.php')) {
+                    return $customerFixture;
+                }
                 return $filePath . 'Customer' . $fileType;
             case 'catalog/product':
+                if (file_exists($productFixture = $filePath . 'product.php')) {
+                    return $productFixture;
+                }
                 return $filePath . 'Product' . $fileType;
             case 'sales/quote':
+                if (file_exists($orderFixture = $filePath . 'order.php')) {
+                    return $orderFixture;
+                }
                 return $filePath . 'Order' . $fileType;
         }
     }

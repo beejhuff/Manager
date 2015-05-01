@@ -11,7 +11,6 @@ class FactoryTest extends WebTestCase
     public function setUp()
     {
         parent::setUp();
-//        Factory::prepareDb();
     }
 
     public function tearDown()
@@ -35,7 +34,7 @@ class FactoryTest extends WebTestCase
     {
         $address = Factory::make('customer/address', ['city' => 'Stockholm']);
 
-        $this->assertEquals('Session Digital', $address->getCompany());
+        $this->assertEquals('Karlsson & Lord', $address->getCompany());
         $this->assertEquals('Stockholm', $address->getCity());
     }
 
