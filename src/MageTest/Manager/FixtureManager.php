@@ -17,11 +17,6 @@ use MageTest\Manager\Cache\FileFixtureStorage;
 final class FixtureManager
 {
     /**
-     *  Where the user has to store its project specific fixtures
-     */
-    const CUSTOM_FIXTURES_DIR = '/tests/fixtures';
-
-    /**
      * @var array
      */
     private static $fixtures = array();
@@ -107,34 +102,6 @@ final class FixtureManager
     }
 
     /**
-     * @param                  $name
-     * @param BuilderInterface $builder
-     * @param                  $multiplier
-     * @return mixed
-     */
-    private function create($name, BuilderInterface $builder, $multiplier)
-    {
-        if ($multiplier > 1) {
-            $models = array();
-            while ($multiplier) {
-                $model = $builder->build();
-                Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
-                $models[] = $this->saveModel($model);
-                $multiplier--;
-            }
-            Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
-            Factory::resetMultiplier();
-
-            return static::$fixtures[$name] = $models;
-        }
-        $model = $builder->build();
-        Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
-        $this->saveModel($model);
-        Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
-        return static::$fixtures[$name] = $model;
-    }
-
-    /**
      *  Returns a single model previously loaded
      *
      * @param $name
@@ -163,6 +130,50 @@ final class FixtureManager
     }
 
     /**
+     * @param \Mage_Core_Model_Abstract $model
+     */
+    public function setFixture(\Mage_Core_Model_Abstract $model)
+    {
+        self::$fixtures[$model->getResourceName()] = $model;
+    }
+
+    /**
+     * @return array
+     */
+    public function getFixtures()
+    {
+        return static::$fixtures;
+    }
+
+    /**
+     * @param                  $name
+     * @param BuilderInterface $builder
+     * @param                  $multiplier
+     * @return mixed
+     */
+    private function create($name, BuilderInterface $builder, $multiplier)
+    {
+        if ($multiplier > 1) {
+            $models = array();
+            while ($multiplier) {
+                $model = $builder->build();
+                Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+                $models[] = $this->saveModel($model);
+                $multiplier--;
+            }
+            Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
+            Factory::resetMultiplier();
+
+            return static::$fixtures[$name] = $models;
+        }
+        $model = $builder->build();
+        Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+        $this->saveModel($model);
+        Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
+        return static::$fixtures[$name] = $model;
+    }
+
+    /**
      * Deletes all the magento fixtures
      */
     public function clear()
@@ -185,11 +196,16 @@ final class FixtureManager
     }
 
     /**
-     * @return array
+     *  Clean db
      */
-    public function getFixtures()
+    public function prepareDb()
     {
-        return static::$fixtures;
+        if ($this->storage->hasData()) {
+            foreach ($this->storage->getAllIdentifiers() as $model) {
+                $model->delete();
+            }
+            $this->storage->truncate();
+        }
     }
 
     /**
@@ -201,6 +217,7 @@ final class FixtureManager
         return array_key_exists($name, static::$fixtures);
     }
 
+
     /**
      * @param $name
      * @return bool
@@ -209,7 +226,6 @@ final class FixtureManager
     {
         return array_key_exists($name, $this->builders);
     }
-
 
     /**
      * @param $modelType
@@ -251,82 +267,20 @@ final class FixtureManager
     }
 
     /**
-     * @param        $fixtureType
-     * @param string $fileType
-     * @return string
-     */
-    private function getDefaultFixtureTemplate($fixtureType, $fileType = '.yml')
-    {
-        $filePath = __DIR__ . '/Fixtures/';
-        switch ($fixtureType) {
-            case 'admin/user':
-                if (file_exists($adminFixture = $filePath . 'admin.php')) {
-                    return $adminFixture;
-                }
-                return $filePath . 'Admin' . $fileType;
-            case 'customer/address':
-                if (file_exists($addressFixture = $filePath . 'address.php')) {
-                    return $addressFixture;
-                }
-                return $filePath . 'Address' . $fileType;
-            case 'customer/customer':
-                if (file_exists($customerFixture = $filePath . 'customer.php')) {
-                    return $customerFixture;
-                }
-                return $filePath . 'Customer' . $fileType;
-            case 'catalog/product':
-                if (file_exists($productFixture = $filePath . 'product.php')) {
-                    return $productFixture;
-                }
-                return $filePath . 'Product' . $fileType;
-            case 'sales/quote':
-                if (file_exists($orderFixture = $filePath . 'order.php')) {
-                    return $orderFixture;
-                }
-                return $filePath . 'Order' . $fileType;
-        }
-    }
-
-    /**
-     *  Get the default fixture path.
-     *  TODO: don't use getcwd()?
-     *
-     * @param      $fixtureType
-     * @param null $type
-     * @return string
-     */
-    private function getCustomFixtureTemplate($fixtureType, $type = null)
-    {
-        if (!is_string($type) and !is_null($type)) {
-            throw new InvalidArgumentException(
-                sprintf('2nd argument must have string type. %s given', [var_dump($type)])
-            );
-        }
-        $parts = explode("/", $fixtureType);
-        return implode(
-            '',
-            array(
-                getcwd(),
-                static::CUSTOM_FIXTURES_DIR,
-                DIRECTORY_SEPARATOR,
-                end($parts) == 'quote' ? 'order' : end($parts),
-                $type ? : '.yml'
-            )
-        );
-    }
-
-    /**
      * @param $fixtureType
      * @return string
+     * @throws Exception
      */
     private function getFallbackFixture($fixtureType)
     {
-        foreach (FixtureFallback::$sequence as $type) {
-            if (file_exists($fixture = $this->getCustomFixtureTemplate($fixtureType, $type))) {
-                return $fixture;
+        foreach (FixtureFallback::locationSequence() as $directory) {
+            foreach (FixtureFallback::$sequence as $type) {
+                if (file_exists($fixture = $directory . DIRECTORY_SEPARATOR . FixtureFallback::getFileName($fixtureType, $type))) {
+                    return $fixture;
+                }
             }
         }
-        return $this->getDefaultFixtureTemplate($fixtureType);
+        throw new Exception('No matching fixture file was found.');
     }
 
     /**
@@ -360,27 +314,6 @@ final class FixtureManager
 	    $model->getResource()->save($model);
         $this->storage->persistIdentifier($model);
 	    return $model;
-    }
-
-    /**
-     *  Clean db
-     */
-    public function prepareDb()
-    {
-        if ($this->storage->hasData()) {
-            foreach ($this->storage->getAllIdentifiers() as $model) {
-                $model->delete();
-            }
-            $this->storage->truncate();
-        }
-    }
-
-    /**
-     * @param \Mage_Core_Model_Abstract $model
-     */
-    public function setFixture(\Mage_Core_Model_Abstract $model)
-    {
-        self::$fixtures[$model->getResourceName()] = $model;
     }
 
 }

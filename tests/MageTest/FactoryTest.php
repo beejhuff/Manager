@@ -21,8 +21,7 @@ class FactoryTest extends WebTestCase
 
     public function testCreateSimpleProduct()
     {
-        $products = Factory::times(3)
-            ->make('catalog/product', ['name' => 'foo', 'sku' => 'abc123']);
+        $products = Factory::times(3)->make('catalog/product', ['name' => 'foo']);
 
         $this->assertEquals(3, count($products));
         foreach ($products as $product) {
