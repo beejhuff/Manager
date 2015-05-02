@@ -375,4 +375,12 @@ final class FixtureManager
         }
     }
 
+    /**
+     * @param \Mage_Core_Model_Abstract $model
+     */
+    public function setFixture(\Mage_Core_Model_Abstract $model)
+    {
+        self::$fixtures[$model->getResourceName()] = $model;
+    }
+
 }

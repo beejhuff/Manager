@@ -3,6 +3,8 @@
 namespace MageTest\Manager\Builders;
 
 use Mage;
+use Mage_CatalogInventory_Model_Stock;
+use Mage_Core_Model_App;
 
 /**
  * Class Product
@@ -73,8 +75,8 @@ class Product extends AbstractBuilder implements BuilderInterface
     {
         $stockItem = Mage::getModel('cataloginventory/stock_item');
         $stockItem->assignProduct($this->model)
-            ->setData('stock_id', 1)
-            ->setData('store_id', 1);
+            ->setData('stock_id', Mage_CatalogInventory_Model_Stock::DEFAULT_STOCK_ID)
+            ->setData('store_id', Mage_Core_Model_App::DISTRO_STORE_ID);
 
         foreach ($this->attributes['stock_data'] as $key => $value) {
             $stockItem->setData($key, $value);

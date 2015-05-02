@@ -85,4 +85,13 @@ class Factory
         return (new static)->fixtureManager->prepareDb();
     }
 
+    /**
+     * @param \Mage_Core_Model_Abstract $model
+     * @return mixed
+     */
+    public static function setFixture(\Mage_Core_Model_Abstract $model)
+    {
+        return (new static)->fixtureManager->setFixture($model);
+    }
+
 }
