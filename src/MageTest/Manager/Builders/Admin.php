@@ -4,23 +4,25 @@ namespace MageTest\Manager\Builders;
 
 /**
  * Class Admin
+ *
  * @package MageTest\Manager\Builders
  */
 class Admin extends AbstractBuilder implements BuilderInterface
 {
     /**
-     * @return \Mage_Admin_Model_User
+     * @return false|\Mage_Core_Model_Abstract
      */
     public function build()
     {
         $this->model->addData($this->attributes);
-        $this->model->save();
-
+        $this->saveModel($this->model);
         $this->addAdminRole();
-
         return $this->model;
     }
 
+    /**
+     *  Save admin user role
+     */
     private function addAdminRole()
     {
         $role = \Mage::getModel("admin/role");
@@ -28,6 +30,6 @@ class Admin extends AbstractBuilder implements BuilderInterface
         $role->setTreeLevel(1);
         $role->setRoleType('U');
         $role->setUserId($this->model->getId());
-        $role->save();
+        $this->saveModel($role);
     }
 }

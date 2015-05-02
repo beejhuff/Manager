@@ -3,6 +3,9 @@
 namespace MageTest\Manager\Builders;
 
 use Mage;
+use Mage_Core_Model_Abstract;
+use Mage_Sales_Model_Order;
+use RuntimeException;
 
 /**
  * Class Order
@@ -44,7 +47,6 @@ class Order extends AbstractBuilder implements BuilderInterface
             ->setCollectShippingRates(true)->collectShippingRates()
             ->setShippingMethod($this->attributes['shipping_method'])
             ->setPaymentMethod($this->attributes['payment_method']);
-
         return $this;
     }
 
@@ -53,16 +55,17 @@ class Order extends AbstractBuilder implements BuilderInterface
      */
     public function build()
     {
+        $this->model->setData($this->attributes);
         $this->model->setStoreId($this->model->getStoreId());
-
         $this->model->getPayment()->importData(array('method' => $this->attributes['payment_method']));
-
         $this->model->collectTotals()->save();
-
-        \Mage::app()->getStore()->setConfig(\Mage_Sales_Model_Order::XML_PATH_EMAIL_ENABLED, '0');
-
+        if (!$this->model instanceof Mage_Core_Model_Abstract) {
+            throw new RuntimeException("Unable to save '{$this->model->getResourceName()}' to database.");
+        }
+        Mage::app()->getStore()->setConfig(Mage_Sales_Model_Order::XML_PATH_EMAIL_ENABLED, '0');
         $service = Mage::getModel('sales/service_quote', $this->model);
         $service->submitAll();
         return $service->getOrder();
     }
+
 }

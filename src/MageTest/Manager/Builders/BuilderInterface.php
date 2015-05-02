@@ -2,8 +2,10 @@
 
 namespace MageTest\Manager\Builders;
 
+use MageTest\Manager\Cache\Storage;
+
 /**
- * Interface BuilderInterface
+ *
  * @package MageTest\Manager\Builders
  */
 interface BuilderInterface {
@@ -11,10 +13,14 @@ interface BuilderInterface {
      * Magento model type required in construct e.g catalog/product
      * @param $modelType
      */
-    public function __construct($modelType);
+    /**
+     * @param                                 $modelType
+     * @param \MageTest\Manager\Cache\Storage $storage
+     */
+    public function __construct($modelType, Storage $storage);
 
     /**
      * Build fixture model
      */
     public function build();
-} 
+}

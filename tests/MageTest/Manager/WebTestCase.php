@@ -6,7 +6,7 @@ use Behat\Mink\Mink;
 use Behat\Mink\Session;
 use Behat\Mink\WebAssert;
 use Mage;
-use MageTest\Manager\Attributes\Provider\YamlProvider;
+use MageTest\Manager\Attributes\Provider\AttributesProvider;
 use PHPUnit_Framework_TestCase;
 
 abstract class WebTestCase extends PHPUnit_Framework_Testcase
@@ -28,7 +28,7 @@ abstract class WebTestCase extends PHPUnit_Framework_Testcase
             'goutte' => new Session(new GoutteDriver())
         ));
         $this->mink->setDefaultSessionName('goutte');
-        $this->manager = new FixtureManager(new YamlProvider());
+        $this->manager = new FixtureManager(new AttributesProvider());
     }
 
     protected function tearDown()

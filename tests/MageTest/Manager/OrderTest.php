@@ -13,10 +13,10 @@ class OrderTest extends WebTestCase
 
     public function testCreateOrderWithOneProduct()
     {
-        $this->adminLogin('admin', 'adminadmin123123');
+        $this->adminLogin('admin', 'password123');
 
         $session = $this->getSession();
-        $session->visit(getenv('BASE_URL') . '/admin/sales_order/index');
+        $session->getPage()->clickLink('Orders');
         $this->assertSession()->pageTextContains($this->orderFixture->getIncrementId());
     }
 
@@ -24,10 +24,10 @@ class OrderTest extends WebTestCase
     {
         $this->manager->clear();
 
-        $this->adminLogin('admin', 'adminadmin123123');
+        $this->adminLogin('admin', 'password123');
 
         $session = $this->getSession();
-        $session->visit(getenv('BASE_URL') . '/admin/sales_order/index');
+        $session->getPage()->clickLink('Orders');
         $this->assertSession()->pageTextNotContains($this->orderFixture->getIncrementId());
     }
 }

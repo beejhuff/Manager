@@ -28,7 +28,7 @@ interface ProviderInterface
 
     /*
      * Checks if fixture has dependencies
-     * @return mixed
+     * @return bool
      */
     public function hasFixtureDependencies();
 
@@ -38,9 +38,4 @@ interface ProviderInterface
      */
     public function getFixtureDependencies();
 
-    /*
-     * Return the file extension e.g .yml, .json
-     * @return mixed
-     */
-    public function getFileType();
 }

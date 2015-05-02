@@ -16,6 +16,7 @@ class ProductTest extends WebTestCase
         $session = $this->getSession();
         $session->visit(getenv('BASE_URL') . '/catalog/product/view/id/' . $this->productFixture->getId());
         $this->assertSession()->statusCodeEquals(200);
+        $this->assertSession()->responseContains('In stock');
     }
 
     public function testDeleteSimpleProduct()
@@ -37,6 +38,8 @@ class ProductTest extends WebTestCase
 
         $session = $this->getSession();
         $session->visit(getenv('BASE_URL') . '/catalog/product/view/id/' . $this->productFixture->getId());
-        $this->assertSession()->elementExists('css', '#image');
+        $this->assertSession()->statusCodeEquals(200);
+        $this->assertSession()->elementExists('css', '#image-main');
     }
+
 }
