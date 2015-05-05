@@ -14,7 +14,9 @@ class Factory
     /**
      * @var
      */
-    private static $multiplier;
+    public static $multiplier = 0;
+
+    private static $with;
 
     /**
      * @var FixtureManager
@@ -30,26 +32,42 @@ class Factory
      * @param \MageTest\Manager\FixtureManager|null    $fixtureManager
      * @param \MageTest\Manager\ProviderInterface|null $provider
      * @param null                                     $multiplier
+     * @param null                                     $with
      */
     public function __construct(
         FixtureManager $fixtureManager = null,
         ProviderInterface $provider = null,
-        $multiplier = null
+        $multiplier = null,
+        $with = null
     ) {
         static::$multiplier = $multiplier;
+        static::$with = $with;
         $this->fixtureManager = $fixtureManager ? : new FixtureManager($provider ? : new AttributesProvider);
     }
 
     /**
-     * @param        $model
+     * @param        $resourceName
      * @param array  $overrides
      * @param null   $fixtureFile
      * @return mixed
      */
-    public static function make($model, array $overrides = array(), $fixtureFile = null)
+    public static function make($resourceName, array $overrides = array(), $fixtureFile = null)
     {
-        return (new static(null, null, static::$multiplier))
-            ->fixtureManager->loadFixture($model, $fixtureFile, $overrides, static::$multiplier);
+        return (new static(null, null, static::$multiplier, static::$with))
+            ->fixtureManager
+            ->setMultiplierId($resourceName)
+            ->setFixtureDependency(static::$with)
+            ->loadFixture($resourceName, $fixtureFile, $overrides, static::$multiplier)
+            ;
+    }
+
+    /**
+     * @param \Mage_Core_Model_Abstract $model
+     * @return static
+     */
+    public static function with(\Mage_Core_Model_Abstract $model)
+    {
+        return new static(null, null, null, $model);
     }
 
     /**
@@ -92,6 +110,14 @@ class Factory
     public static function setFixture(\Mage_Core_Model_Abstract $model)
     {
         return (new static)->fixtureManager->setFixture($model);
+    }
+
+    /**
+     *
+     */
+    public static function unsetFixtures()
+    {
+        FixtureManager::$globalFixtureRegistry = [];
     }
 
 }

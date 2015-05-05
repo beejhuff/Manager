@@ -17,7 +17,7 @@ interface ProviderInterface
      * Returns magento model required for fixture
      * @return mixed
      */
-    public function getModelType();
+    public function getResourceName();
 
     /*
      * Reads fixture attributes from file

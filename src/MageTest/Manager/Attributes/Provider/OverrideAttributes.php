@@ -20,7 +20,7 @@ trait OverrideAttributes
      */
     public function overrideAttributes(array $attributes, $appendNew = true)
     {
-        $type = $this->getModelType();
+        $type = $this->getResourceName();
 
         foreach ($this->model[$type]['attributes'] as $key => $value) {
             if (array_key_exists($key, $attributes)) {
@@ -39,7 +39,7 @@ trait OverrideAttributes
      */
     private function appendNewAttributes(array $attributes)
     {
-        $type = $this->getModelType();
+        $type = $this->getResourceName();
         foreach ($attributes as $key => $value) {
             if (!array_key_exists($key, $this->model[$type])) {
                 $this->model[$type]['attributes'][$key] = $value;
@@ -50,6 +50,6 @@ trait OverrideAttributes
     /**
      * @return string
      */
-    abstract public function getModelType();
+    abstract public function getResourceName();
 
 }
