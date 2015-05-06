@@ -19,7 +19,12 @@ final class FixtureManager
     /**
      * @var array
      */
-    private static $fixtures = array();
+    public static $globalFixtureRegistry = array();
+
+    /**
+     * @var array
+     */
+    private $fixtures = array();
 
     /**
      * @var array
@@ -36,6 +41,8 @@ final class FixtureManager
      */
     private $storage;
 
+    private $multiplier = array();
+
     /**
      * @param ProviderInterface $attributesProvider
      * @param Storage           $storage
@@ -47,94 +54,117 @@ final class FixtureManager
     }
 
     /**
-     * @param       $fixtureType
-     * @param null  $userFixtureFile
+     * @param       $resourceName
+     * @param null  $providedFixtureFile
      * @param array $overrides
      * @param       $multiplier
      * @return mixed
      */
-    public function loadFixture($fixtureType, $userFixtureFile = null, array $overrides = null, $multiplier = null)
+    public function loadFixture($resourceName, $providedFixtureFile = null, array $overrides = null, $multiplier = null)
     {
-        $attributesProvider = clone $this->attributesProvider;
-
-        // Fetch a given fixture file
-        if ($userFixtureFile) {
-            $this->fixtureFileExists($userFixtureFile);
-            $attributesProvider->readFile($userFixtureFile);
-        } else {
-            // Fall back to a custom default, or to a default default
-            $attributesProvider->readFile($this->getFallbackFixture($fixtureType));
+        // First time we enter this method then we will specify how many models we want to make
+        // and if no argument is specified then we will want to build just 1 model
+        if (!$this->multiplier[$resourceName]) {
+            $this->multiplier[$resourceName] = $multiplier ? : 1;
+            $this->fixtures[$resourceName] = [];
         }
 
-        // ...and override attributes + add non-existing ones too
+        // Load an appropriate fixture file
+        $attributesProvider = $this->getAttributesProvider($resourceName, $providedFixtureFile);
+
+        // ...and apply any attribute overrides + add attributes not present in the fixture file
         if ($overrides) {
             $attributesProvider->overrideAttributes($overrides);
         }
 
-        // Fetch a matching builder instance
-        $builder = $this->getBuilder($attributesProvider->getModelType());
-
-        // Set the attributes for the builder to construct a model with
-        $builder->setAttributes($attributesProvider->readAttributes());
+        // Load the correct builder and set attributes on that instance
+        $builder = $this->prepareBuilder($attributesProvider);
 
         // Load any dependencies recursively
         if ($attributesProvider->hasFixtureDependencies()) {
             foreach ($attributesProvider->getFixtureDependencies() as $dependency) {
                 $withDependency = 'with' . $this->getDependencyModel($dependency);
-                if ($this->hasFixture($dependency)) {
-                    // When building models that has a dependency, it is nice to be able to
-                    // first build the dependency and then the dependant model. The trick is
-                    // to check if there is a model already built and if so, reuse that guy
-                    // when building the dependant class
-                    if (is_array(self::$fixtures[$dependency])) {
-                        // If they key holds an array of models, then just use the first one
-                        $builder->$withDependency(reset(self::$fixtures[$dependency]));
-                    } else {
-                        $builder->$withDependency(self::$fixtures[$dependency]);
-                    }
+                if ($this->isLoaded($dependency)) {
+                    $builder->$withDependency($this->fetchDependency($dependency));
                 } else {
-                    // Otherwise, just go ahead and create a new model
                     $builder->$withDependency($this->loadFixture($dependency));
                 }
             }
         }
-        return $this->create($attributesProvider->getModelType(), $builder, $multiplier);
+        return $this->create($attributesProvider->getResourceName(), $builder, $providedFixtureFile, $overrides);
+    }
+
+    /**
+     * @param                  $resourceName
+     * @param BuilderInterface $builder
+     * @param                  $providedFixtureFile
+     * @param                  $overrides
+     * @return mixed
+     */
+    private function create($resourceName, BuilderInterface $builder, $providedFixtureFile, $overrides)
+    {
+        if ($this->multiplier[$resourceName] > 1) {
+            $this->invokeBuild($resourceName, $builder);
+            return $this->loadFixture($resourceName, $providedFixtureFile, $overrides);
+        }
+        $this->invokeBuild($resourceName, $builder);
+        if (count($this->fixtures[$resourceName]) < 2) {
+            return reset($this->fixtures[$resourceName]);
+        }
+        return $this->fixtures[$resourceName];
+    }
+
+    /**
+     * @param                  $resourceName
+     * @param BuilderInterface $builder
+     * @return void
+     */
+    private function invokeBuild($resourceName, BuilderInterface $builder)
+    {
+        $model = $builder->build();
+        Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+        $this->register($resourceName, $this->saveModel($model));
+        Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
+        $this->multiplier[$resourceName]--;
+    }
+
+    /**
+     * @param $resourceName
+     * @param $model
+     * @return void
+     */
+    private function register($resourceName, $model)
+    {
+        $this->fixtures[$resourceName][] = $model;
+        static::$globalFixtureRegistry[] = $model;
     }
 
     /**
      *  Returns a single model previously loaded
      *
-     * @param $name
+     * @param $resourceName
      * @param $number If it has several of same type, get model with $number
      * @throws InvalidArgumentException
      * @return mixed
      */
-    public function getFixture($name, $number = null)
+    public function getFixture($resourceName, $number = null)
     {
-        if (!$this->hasFixture($name)) {
-            throw new InvalidArgumentException("Could not find a fixture: $name");
+        if (!$this->isLoaded($resourceName)) {
+            throw new InvalidArgumentException("Could not find a fixture: $resourceName");
         }
         // A number was given, and indeed the fixtures key is an array,
         // then go ahead and return the wanted number
-        if ($number && is_array(static::$fixtures[$name])) {
-            return static::$fixtures[$name][$number];
+        if ($number && is_array($this->fixtures[$resourceName])) {
+            return $this->fixtures[$resourceName][$number];
         }
-        // If no number is specified as argument, then return the first one off
+        // If no number is specified as argument, then return the last one off
         // fixtures the array
-        if (is_array(static::$fixtures[$name])) {
-            return static::$fixtures[$name][0];
+        if (is_array($this->fixtures[$resourceName])) {
+            return end($this->fixtures[$resourceName]);
         }
         // Lastly, if its not an array and no number was given, just return
         // the fixture that was queried for
-        return static::$fixtures[$name];
-    }
-
-    /**
-     * @param \Mage_Core_Model_Abstract $model
-     */
-    public function setFixture(\Mage_Core_Model_Abstract $model)
-    {
-        self::$fixtures[$model->getResourceName()] = $model;
+        return $this->fixtures[$resourceName];
     }
 
     /**
@@ -142,35 +172,7 @@ final class FixtureManager
      */
     public function getFixtures()
     {
-        return static::$fixtures;
-    }
-
-    /**
-     * @param                  $name
-     * @param BuilderInterface $builder
-     * @param                  $multiplier
-     * @return mixed
-     */
-    private function create($name, BuilderInterface $builder, $multiplier)
-    {
-        if ($multiplier > 1) {
-            $models = array();
-            while ($multiplier) {
-                $model = $builder->build();
-                Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
-                $models[] = $this->saveModel($model);
-                $multiplier--;
-            }
-            Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
-            Factory::resetMultiplier();
-
-            return static::$fixtures[$name] = $models;
-        }
-        $model = $builder->build();
-        Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
-        $this->saveModel($model);
-        Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
-        return static::$fixtures[$name] = $model;
+        return static::$globalFixtureRegistry;
     }
 
     /**
@@ -178,22 +180,15 @@ final class FixtureManager
      */
     public function clear()
     {
-        foreach (static::$fixtures as $model) {
-            if (is_array($model)) {
-                foreach ($model as $fixture) {
-                    Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
-                    $fixture->delete();
-                    Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
-                }
-            } else {
-                Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
-                $model->delete();
-                Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
-            }
+        foreach (static::$globalFixtureRegistry as $model) {
+            Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
+            $model->delete();
+            Mage::app()->setCurrentStore(Mage_Core_Model_App::DISTRO_STORE_ID);
         }
-        static::$fixtures = array();
+        static::$globalFixtureRegistry = array();
         $this->storage->truncate();
     }
+
 
     /**
      *  Clean db
@@ -209,22 +204,21 @@ final class FixtureManager
     }
 
     /**
-     * @param $name
+     * @param $resourceName
      * @return bool
      */
-    private function hasFixture($name)
+    private function isLoaded($resourceName)
     {
-        return array_key_exists($name, static::$fixtures);
+        return array_key_exists($resourceName, $this->fixtures);
     }
 
-
     /**
-     * @param $name
+     * @param $resourceName
      * @return bool
      */
-    private function hasBuilder($name)
+    private function hasBuilder($resourceName)
     {
-        return array_key_exists($name, $this->builders);
+        return array_key_exists($resourceName, $this->builders);
     }
 
     /**
@@ -233,10 +227,6 @@ final class FixtureManager
      */
     private function getBuilder($modelType)
     {
-        if ($this->hasBuilder($modelType)) {
-            return $this->builders[$modelType];
-        }
-
         switch ($modelType) {
             case 'admin/user':
                 return $this->builders[$modelType] = new Builders\Admin($modelType, $this->storage);
@@ -256,26 +246,15 @@ final class FixtureManager
     }
 
     /**
-     * @param $fixtureFile
-     * @throws InvalidArgumentException
-     */
-    private function fixtureFileExists($fixtureFile)
-    {
-        if (!file_exists($fixtureFile)) {
-            throw new InvalidArgumentException("The fixture file: $fixtureFile does not exist. Please check path.");
-        }
-    }
-
-    /**
-     * @param $fixtureType
+     * @param $resourceName
      * @return string
      * @throws Exception
      */
-    private function getFallbackFixture($fixtureType)
+    private function loadFixtureFile($resourceName)
     {
         foreach (FixtureFallback::locationSequence() as $directory) {
             foreach (FixtureFallback::$sequence as $type) {
-                if (file_exists($fixture = $directory . DIRECTORY_SEPARATOR . FixtureFallback::getFileName($fixtureType, $type))) {
+                if (file_exists($fixture = $directory . DIRECTORY_SEPARATOR . FixtureFallback::getFileName($resourceName, $type))) {
                     return $fixture;
                 }
             }
@@ -284,36 +263,104 @@ final class FixtureManager
     }
 
     /**
-     * @param $dependency
+     * @param $resourceName
      * @return string
      */
-    private function getDependencyModel($dependency)
+    private function getDependencyModel($resourceName)
     {
         $attributesProvider = clone $this->attributesProvider;
-        $attributesProvider->readFile($this->getFallbackFixture($dependency));
-        $dependencyType = $attributesProvider->getModelType();
+        $attributesProvider->readFile($this->loadFixtureFile($resourceName));
+        $dependencyType = $attributesProvider->getResourceName();
         return $this->parseDependencyModel($dependencyType);
     }
 
     /**
-     * @param $dependencyType
+     * @param $resourceName
      * @return string
      */
-    private function parseDependencyModel($dependencyType)
+    private function parseDependencyModel($resourceName)
     {
-        preg_match("/\/(.*)/", $dependencyType, $matches);
+        preg_match("/\/(.*)/", $resourceName, $matches);
         return ucfirst(end($matches));
     }
 
     /**
-     * @param $model
+     * @param \Mage_Core_Model_Abstract $model
+     * @return \Mage_Core_Model_Abstract
+     */
+    private function saveModel(\Mage_Core_Model_Abstract $model)
+    {
+        $model->getResource()->save($model);
+        $this->storage->persistIdentifier($model);
+        return $model;
+    }
+
+    /**
+     * @param $resourceName
+     * @param $providedFixtureFile
+     * @return ProviderInterface
+     * @throws Exception
+     */
+    private function getAttributesProvider($resourceName, $providedFixtureFile)
+    {
+        $attributesProvider = clone $this->attributesProvider;
+
+        // Fetch a given fixture file
+        if ($providedFixtureFile && file_exists($providedFixtureFile)) {
+            $attributesProvider->readFile($providedFixtureFile);
+        } else {
+            // Fall back to a custom default, or to a default default
+            $attributesProvider->readFile($this->loadFixtureFile($resourceName));
+        }
+        return $attributesProvider;
+    }
+
+    /**
+     * @param $attributesProvider
+     * @return Builders\Address|Builders\Admin|Builders\Customer|Builders\General|Builders\Order|Builders\Product
+     */
+    private function prepareBuilder($attributesProvider)
+    {
+        // Fetch a matching builder instance
+        $builder = $this->getBuilder($attributesProvider->getResourceName());
+        // Set the attributes for the builder to construct a model with
+        $builder->setAttributes($attributesProvider->readAttributes());
+        return $builder;
+    }
+
+    /**
+     * @param $resourceName
      * @return mixed
      */
-    private function saveModel($model)
+    private function fetchDependency($resourceName)
     {
-	    $model->getResource()->save($model);
-        $this->storage->persistIdentifier($model);
-	    return $model;
+        if (is_array($this->fixtures[$resourceName])) {
+            return end($this->fixtures[$resourceName]);
+        }
+        return $this->fixtures[$resourceName];
+    }
+
+
+    /**
+     * @param \Mage_Core_Model_Abstract $model
+     * @return $this
+     */
+    public function setFixtureDependency(\Mage_Core_Model_Abstract $model)
+    {
+        if ($model instanceof \Mage_Core_Model_Abstract) {
+            $this->fixtures[$model->getResourceName()][] = $model;
+        }
+        return $this;
+    }
+
+    /**
+     * @param $model
+     * @return $this
+     */
+    public function setMultiplierId($model)
+    {
+        $this->multiplier[$model] = null;
+        return $this;
     }
 
 }

@@ -71,6 +71,9 @@ class Product extends AbstractBuilder implements BuilderInterface
         return $attributes;
     }
 
+    /**
+     * @throws \Exception
+     */
     private function setStockData()
     {
         $stockItem = Mage::getModel('cataloginventory/stock_item');

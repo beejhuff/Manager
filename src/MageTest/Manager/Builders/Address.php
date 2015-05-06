@@ -12,7 +12,7 @@ class Address extends AbstractBuilder implements BuilderInterface
      * @param \Mage_Customer_Model_Customer $customer
      * @return $this
      */
-    public function withCustomer($customer)
+    public function withCustomer(\Mage_Customer_Model_Customer $customer)
     {
         $this->attributes['customer_id'] = $customer->getId();
         $this->attributes['firstname'] = $customer->getFirstname();

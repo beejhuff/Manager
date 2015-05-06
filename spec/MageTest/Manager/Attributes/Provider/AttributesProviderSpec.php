@@ -38,7 +38,7 @@ class AttributesProviderSpec extends ObjectBehavior
 
     function it_should_get_the_magento_model_from_the_yaml_file()
     {
-        $this->getModelType()->shouldReturn('customer/address');
+        $this->getResourceName()->shouldReturn('customer/address');
     }
 
     function it_should_read_any_dependencies_on_other_fixtures()
@@ -54,7 +54,7 @@ class AttributesProviderSpec extends ObjectBehavior
     function it_should_load_a_php_fixture()
     {
         $this->readFile(getcwd() . '/tests/fixtures/order.php');
-        $this->getModelType()->shouldReturn('sales/quote');
+        $this->getResourceName()->shouldReturn('sales/quote');
         $this->hasFixtureDependencies()->shouldBe(true);
         $this->getFixtureDependencies()->shouldReturn(['catalog/product', 'customer/address']);
     }

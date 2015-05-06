@@ -43,13 +43,13 @@ class AttributesProvider implements ProviderInterface
      */
     public function readAttributes()
     {
-        return $this->model[$this->getModelType()]['attributes'];
+        return $this->model[$this->getResourceName()]['attributes'];
     }
 
     /**
      * @return mixed
      */
-    public function getModelType()
+    public function getResourceName()
     {
         return key($this->model);
     }
@@ -81,7 +81,7 @@ class AttributesProvider implements ProviderInterface
      */
     public function hasFixtureDependencies()
     {
-        $type = $this->getModelType();
+        $type = $this->getResourceName();
         return isset($this->model[$type]['depends']) && $this->model[$type]['depends'] != null;
     }
 
@@ -90,8 +90,8 @@ class AttributesProvider implements ProviderInterface
      */
     public function getFixtureDependencies()
     {
-        $dependencies = isset($this->model[$this->getModelType()]['depends'])
-            ? $this->model[$this->getModelType()]['depends']
+        $dependencies = isset($this->model[$this->getResourceName()]['depends'])
+            ? $this->model[$this->getResourceName()]['depends']
             : null;
         if (!is_array($dependencies) && !is_null($dependencies)) {
             return [$dependencies];
