@@ -84,7 +84,7 @@ class Factory
      */
     public static function times($multiplier)
     {
-        return new static(null, null, $multiplier);
+        return new static(null, null, $multiplier, static::$with);
     }
 
     /**

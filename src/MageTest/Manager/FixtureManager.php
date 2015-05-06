@@ -91,21 +91,26 @@ final class FixtureManager
                 }
             }
         }
-        return $this->create($attributesProvider->getResourceName(), $builder);
+        return $this->create($attributesProvider->getResourceName(), $builder, $providedFixtureFile, $overrides);
     }
 
     /**
      * @param                  $resourceName
      * @param BuilderInterface $builder
+     * @param                  $providedFixtureFile
+     * @param                  $overrides
      * @return mixed
      */
-    private function create($resourceName, BuilderInterface $builder)
+    private function create($resourceName, BuilderInterface $builder, $providedFixtureFile, $overrides)
     {
         if ($this->multiplier[$resourceName] > 1) {
             $this->invokeBuild($resourceName, $builder);
-            return $this->loadFixture($resourceName);
+            return $this->loadFixture($resourceName, $providedFixtureFile, $overrides);
         }
         $this->invokeBuild($resourceName, $builder);
+        if (count($this->fixtures[$resourceName]) < 2) {
+            return reset($this->fixtures[$resourceName]);
+        }
         return $this->fixtures[$resourceName];
     }
 
@@ -335,11 +340,12 @@ final class FixtureManager
         return $this->fixtures[$resourceName];
     }
 
+
     /**
-     * @param $model
+     * @param \Mage_Core_Model_Abstract $model
      * @return $this
      */
-    public function setFixtureDependency($model)
+    public function setFixtureDependency(\Mage_Core_Model_Abstract $model)
     {
         if ($model instanceof \Mage_Core_Model_Abstract) {
             $this->fixtures[$model->getResourceName()][] = $model;
@@ -347,6 +353,10 @@ final class FixtureManager
         return $this;
     }
 
+    /**
+     * @param $model
+     * @return $this
+     */
     public function setMultiplierId($model)
     {
         $this->multiplier[$model] = null;
