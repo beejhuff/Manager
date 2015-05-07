@@ -28,4 +28,5 @@ class Address extends AbstractBuilder implements BuilderInterface
         $this->model->setCustomerId($this->attributes['customer_id']);
         return $this->model->addData($this->attributes);
     }
+
 }

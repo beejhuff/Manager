@@ -82,12 +82,23 @@ final class FixtureManager
 
         // Load any dependencies recursively
         if ($attributesProvider->hasFixtureDependencies()) {
-            foreach ($attributesProvider->getFixtureDependencies() as $dependency) {
-                $withDependency = 'with' . $this->getDependencyModel($dependency);
-                if ($this->isLoaded($dependency)) {
-                    $builder->$withDependency($this->fetchDependency($dependency));
+            foreach ($attributesProvider->getFixtureDependencies() as $resourceName) {
+                $withDependency = 'with' . $this->getDependencyModel($resourceName);
+                if ($this->isLoaded($resourceName)) {
+                    $model = $this->fetchDependency($resourceName);
+                    if ($this->acceptsMultipleModels($resourceName, $builder)) {
+                        // Add all models to the builder
+                        foreach ($model as $resource) {
+                            $builder->$withDependency($resource);
+                        }
+                    } else {
+                        // Grab the last one off the array
+                        $builder->$withDependency(end($model));
+                    }
                 } else {
-                    $builder->$withDependency($this->loadFixture($dependency));
+                    // Okay, this dependency is not registered on this object,
+                    // so we need to create a new instance
+                    $builder->$withDependency($this->loadFixture($resourceName));
                 }
             }
         }
@@ -334,33 +345,49 @@ final class FixtureManager
      */
     private function fetchDependency($resourceName)
     {
-        if (is_array($this->fixtures[$resourceName])) {
-            return end($this->fixtures[$resourceName]);
-        }
         return $this->fixtures[$resourceName];
     }
 
 
     /**
-     * @param \Mage_Core_Model_Abstract $model
+     * @param $model
      * @return $this
      */
-    public function setFixtureDependency(\Mage_Core_Model_Abstract $model)
+    public function setFixtureDependency($model)
     {
-        if ($model instanceof \Mage_Core_Model_Abstract) {
-            $this->fixtures[$model->getResourceName()][] = $model;
+        if (is_array($model)) {
+            foreach ($model as $resource) {
+                if ($resource instanceof \Mage_Core_Model_Abstract) {
+                    $this->fixtures[$resource->getResourceName()][] = $resource;
+                }
+            }
+        } else {
+            if ($model instanceof \Mage_Core_Model_Abstract) {
+                $this->fixtures[$model->getResourceName()][] = $model;
+            }
         }
         return $this;
     }
 
     /**
-     * @param $model
+     * @param $resourceName
      * @return $this
      */
-    public function setMultiplierId($model)
+    public function setMultiplierId($resourceName)
     {
-        $this->multiplier[$model] = null;
+        $this->multiplier[$resourceName] = null;
         return $this;
+    }
+
+    /**
+     * @param                  $resourceName
+     * @param BuilderInterface $builder
+     * @return bool
+     */
+    private function acceptsMultipleModels($resourceName, BuilderInterface $builder)
+    {
+        return count($this->fixtures[$resourceName]) > 1
+        && in_array( $resourceName, $builder->acceptsMultipleDependencyInstances());
     }
 
 }

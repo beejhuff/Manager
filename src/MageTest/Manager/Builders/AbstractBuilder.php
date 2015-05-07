@@ -62,4 +62,9 @@ abstract class AbstractBuilder
         return $model->save();
     }
 
+    public function acceptsMultipleDependencyInstances()
+    {
+        return [];
+    }
+
 }

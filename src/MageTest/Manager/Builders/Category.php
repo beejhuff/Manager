@@ -14,11 +14,11 @@ class Category extends AbstractBuilder implements BuilderInterface
     public function build()
     {
         $this->model->addData($this->attributes);
-//        $parentCategory = Mage::getModel('catalog/category')->load(
-//            Mage::app()->getStore()->getRootCategoryId()
-//        );
-//        $this->model->setPath($parentCategory->getPath());
-//        $this->model->save();
+        $parentCategory = \Mage::getModel('catalog/category')->load(
+            \Mage::app()->getStore()->getRootCategoryId()
+        );
+        $this->model->setPath($parentCategory->getPath());
+        $this->model->save();
         return $this->model;
     }
 }

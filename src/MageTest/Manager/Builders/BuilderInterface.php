@@ -23,4 +23,9 @@ interface BuilderInterface {
      * Build fixture model
      */
     public function build();
+
+    /**
+     * @return array
+     */
+    public function acceptsMultipleDependencyInstances();
 }
