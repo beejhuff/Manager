@@ -62,10 +62,10 @@ class Factory
     }
 
     /**
-     * @param \Mage_Core_Model_Abstract $model
+     * @param \Mage_Core_Model_Abstract|array $model
      * @return static
      */
-    public static function with(\Mage_Core_Model_Abstract $model)
+    public static function with($model)
     {
         return new static(null, null, null, $model);
     }

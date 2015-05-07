@@ -68,4 +68,9 @@ class Order extends AbstractBuilder implements BuilderInterface
         return $service->getOrder();
     }
 
+    public function acceptsMultipleDependencyInstances()
+    {
+        return array('catalog/product');
+    }
+
 }
