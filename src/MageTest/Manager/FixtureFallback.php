@@ -90,7 +90,8 @@ final class FixtureFallback
      */
     private static function parseFileName($fixtureType)
     {
-        return end(explode('/', $fixtureType));
+        $bits = explode('/', $fixtureType);
+        return end($bits);
     }
 
 }
