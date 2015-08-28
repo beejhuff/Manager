@@ -1,10 +1,12 @@
 <?php
 namespace MageTest\Manager;
 
+use Exception;
 use InvalidArgumentException;
 use Mage;
 use Mage_Core_Model_App;
 use MageTest\Manager\Attributes\Provider\ProviderInterface;
+use MageTest\Manager\Builders\BuilderFactory;
 use MageTest\Manager\Builders\BuilderInterface;
 use MageTest\Manager\Builders;
 use MageTest\Manager\Cache\FileFixtureStorage;
@@ -233,27 +235,12 @@ final class FixtureManager
     }
 
     /**
-     * @param $modelType
+     * @param $resourceName
      * @return Builders\Address|Builders\Admin|Builders\Customer|Builders\General|Builders\Order|Builders\Product
      */
-    private function getBuilder($modelType)
+    private function getBuilder($resourceName)
     {
-        switch ($modelType) {
-            case 'admin/user':
-                return $this->builders[$modelType] = new Builders\Admin($modelType, $this->storage);
-            case 'customer/address':
-                return $this->builders[$modelType] = new Builders\Address($modelType, $this->storage);
-            case 'customer/customer':
-                return $this->builders[$modelType] = new Builders\Customer($modelType, $this->storage);
-            case 'catalog/product':
-                return $this->builders[$modelType] = new Builders\Product($modelType, $this->storage);
-            case 'catalog/category':
-                return $this->builders[$modelType] = new Builders\Category($modelType, $this->storage);
-            case 'sales/quote':
-                return $this->builders[$modelType] = new Builders\Order($modelType, $this->storage);
-            default:
-                return $this->builders[$modelType] = new Builders\General($modelType, $this->storage);
-        }
+        return $this->builders[$resourceName] = BuilderFactory::getBuilder($resourceName, $this->storage);
     }
 
     /**
@@ -323,6 +310,7 @@ final class FixtureManager
             // Fall back to a custom default, or to a default default
             $attributesProvider->readFile($this->loadFixtureFile($resourceName));
         }
+
         return $attributesProvider;
     }
 

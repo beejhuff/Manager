@@ -1,8 +1,8 @@
 <?php
 
 return array(
-    'sales/quote' => array(
-        'depends' => array('catalog/product', 'customer/address'),
+    'sales/order' => array(
+        'depends' => array('sales/quote'),
         'attributes' => array(
             'shipping_method' => 'flatrate_flatrate',
             'payment_method' => 'checkmo'

@@ -38,7 +38,6 @@ final class FixtureFallback
      * @var array
      */
     public static $fixtureTypes = [
-        'sales/quote' => 'order',
         'admin/user' => 'admin'
     ];
 

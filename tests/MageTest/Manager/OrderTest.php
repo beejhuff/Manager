@@ -8,7 +8,7 @@ class OrderTest extends WebTestCase
     protected function setUp()
     {
         parent::setUp();
-        $this->orderFixture = $this->manager->loadFixture('sales/quote');
+        $this->orderFixture = $this->manager->loadFixture('sales/order');
     }
 
     public function testCreateOrderWithOneProduct()
