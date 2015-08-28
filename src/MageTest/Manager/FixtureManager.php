@@ -64,12 +64,7 @@ final class FixtureManager
      */
     public function loadFixture($resourceName, $providedFixtureFile = null, array $overrides = null, $multiplier = null)
     {
-        // First time we enter this method then we will specify how many models we want to make
-        // and if no argument is specified then we will want to build just 1 model
-        if (!$this->multiplier[$resourceName]) {
-            $this->multiplier[$resourceName] = $multiplier ? : 1;
-            $this->fixtures[$resourceName] = [];
-        }
+        $this->initMultiplier($resourceName, $multiplier);
 
         // Load an appropriate fixture file
         $attributesProvider = $this->getAttributesProvider($resourceName, $providedFixtureFile);
@@ -84,25 +79,7 @@ final class FixtureManager
 
         // Load any dependencies recursively
         if ($attributesProvider->hasFixtureDependencies()) {
-            foreach ($attributesProvider->getFixtureDependencies() as $resourceName) {
-                $withDependency = 'with' . $this->getDependencyModel($resourceName);
-                if ($this->isLoaded($resourceName)) {
-                    $model = $this->fetchDependency($resourceName);
-                    if ($this->acceptsMultipleModels($resourceName, $builder)) {
-                        // Add all models to the builder
-                        foreach ($model as $resource) {
-                            $builder->$withDependency($resource);
-                        }
-                    } else {
-                        // Grab the last one off the array
-                        $builder->$withDependency(end($model));
-                    }
-                } else {
-                    // Okay, this dependency is not registered on this object,
-                    // so we need to create a new instance
-                    $builder->$withDependency($this->loadFixture($resourceName));
-                }
-            }
+            $this->recursivelyBuildModelDependencies($resourceName, $attributesProvider, $builder);
         }
         return $this->create($attributesProvider->getResourceName(), $builder, $providedFixtureFile, $overrides);
     }
@@ -223,15 +200,6 @@ final class FixtureManager
     private function isLoaded($resourceName)
     {
         return array_key_exists($resourceName, $this->fixtures);
-    }
-
-    /**
-     * @param $resourceName
-     * @return bool
-     */
-    private function hasBuilder($resourceName)
-    {
-        return array_key_exists($resourceName, $this->builders);
     }
 
     /**
@@ -376,6 +344,59 @@ final class FixtureManager
     {
         return count($this->fixtures[$resourceName]) > 1
         && in_array( $resourceName, $builder->acceptsMultipleDependencyInstances());
+    }
+
+    /**
+     * Method that sets a counter for how many models to create
+     *
+     * @param $resourceName
+     * @param $multiplier
+     */
+    private function initMultiplier($resourceName, $multiplier)
+    {
+        // First time we enter this method then we will specify how many models we want to make
+        // and if no argument is specified then we will want to build just 1 model
+        if (!$this->multiplier[$resourceName]) {
+            $this->multiplier[$resourceName] = $multiplier ?: 1;
+            $this->fixtures[$resourceName] = [];
+        }
+    }
+
+    /**
+     * @param $resourceName
+     * @param $attributesProvider
+     * @param $builder
+     */
+    private function recursivelyBuildModelDependencies($resourceName, $attributesProvider, $builder)
+    {
+        foreach ($attributesProvider->getFixtureDependencies() as $resourceName) {
+            $withDependency = $this->constructWithMethodName($resourceName);
+            if ($this->isLoaded($resourceName)) {
+                $models = $this->fetchDependency($resourceName);
+                if ($this->acceptsMultipleModels($resourceName, $builder)) {
+                    // Add all models to the builder
+                    foreach ($models as $resource) {
+                        $builder->$withDependency($resource);
+                    }
+                } else {
+                    // Grab the last one off the array
+                    $builder->$withDependency(end($models));
+                }
+            } else {
+                // Okay, this dependency is not registered on this object,
+                // so we need to create a new instance
+                $builder->$withDependency($this->loadFixture($resourceName));
+            }
+        }
+    }
+
+    /**
+     * @param $resourceName
+     * @return string
+     */
+    private function constructWithMethodName($resourceName)
+    {
+        return 'with' . $this->getDependencyModel($resourceName);
     }
 
 }

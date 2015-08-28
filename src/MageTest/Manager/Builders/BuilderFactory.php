@@ -3,9 +3,11 @@
 namespace MageTest\Manager\Builders;
 
 
+use MageTest\Manager\Cache\Storage;
+
 class BuilderFactory
 {
-    public static function getBuilder($resourceName, $storage)
+    public static function getBuilder($resourceName, Storage    $storage)
     {
         switch ($resourceName) {
             case 'admin/user':

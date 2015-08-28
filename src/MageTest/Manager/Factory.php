@@ -58,7 +58,7 @@ class Factory
             ->setMultiplierId($resourceName)
             ->setFixtureDependency(static::$with)
             ->loadFixture($resourceName, $fixtureFile, $overrides, static::$multiplier)
-            ;
+        ;
     }
 
     /**
