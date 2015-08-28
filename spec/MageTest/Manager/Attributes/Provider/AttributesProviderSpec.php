@@ -54,9 +54,9 @@ class AttributesProviderSpec extends ObjectBehavior
     function it_should_load_a_php_fixture()
     {
         $this->readFile(getcwd() . '/tests/fixtures/order.php');
-        $this->getResourceName()->shouldReturn('sales/quote');
+        $this->getResourceName()->shouldReturn('sales/order');
         $this->hasFixtureDependencies()->shouldBe(true);
-        $this->getFixtureDependencies()->shouldReturn(['catalog/product', 'customer/address']);
+        $this->getFixtureDependencies()->shouldReturn(['sales/quote']);
     }
 
     function it_should_protest_if_the_loader_does_not_exist()
